@@ -10,10 +10,11 @@
     "seed": "node scripts/seed.js"
   },
   "dependencies": {
-    "@google/genai": "^1.16.0",
-    "cors": "^2.8.5",
-    "dotenv": "^16.4.5",
-    "express": "^4.21.1",
+"@anthropic-ai/sdk": "^0.32.1",
+  "@google/genai": "^1.16.0",
+  "cors": "^2.8.6",
+  "dotenv": "^16.6.1",
+  "express": "^4.22.2",
     "mongoose": "^8.8.0"
   },
   "engines": {

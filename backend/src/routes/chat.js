@@ -1,19 +1,11 @@
-import { Router } from "express";
-import { runAgent } from "../agent/agent.js";
+import express from 'express';
 
-export const chatRouter = Router();
+export const chatRouter = express.Router();
 
-chatRouter.post("/", async (req, res) => {
-  const { userId, message } = req.body;
-  if (!userId || !message) {
-    return res.status(400).json({ error: "userId y message son requeridos" });
-  }
-
-  try {
-    const result = await runAgent({ userId, message });
-    res.json(result);
-  } catch (err) {
-    console.error("[chat] error:", err);
-    res.status(500).json({ error: err.message });
-  }
+chatRouter.post('/', (req, res) => {
+  const userMessage = req.body.message || "Sin mensaje";
+  console.log("✉️ El usuario escribió:", userMessage);
+  
+  // Esto es lo que verá la pantalla web temporalmente
+  res.json({ reply: "¡Hola! El backend ya está conectado a la web y a MongoDB." });
 });
