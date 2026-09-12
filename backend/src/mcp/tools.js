@@ -4,7 +4,7 @@ import { User } from "../db/models/User.js";
 import { UIComponentCache } from "../db/models/UIComponentCache.js";
 
 /**
- * Definiciones de tools en formato Anthropic tool-use.
+ * Definiciones de tools en formato Gemini function declarations.
  * Esta es la única superficie por la que el agente toca datos y
  * dispara acciones reales — equivalente al servidor MCP del pizarrón.
  */
@@ -16,7 +16,7 @@ export const toolDefinitions = [
       "de reestructura (12, 18 y 24 meses) con su CAT y mensualidad. " +
       "Úsala cuando el usuario quiera pagar menos intereses, reestructurar " +
       "su deuda o entender opciones de pago de su tarjeta.",
-    input_schema: {
+    parametersJsonSchema: {
       type: "object",
       properties: {
         userId: { type: "string", description: "ID del usuario" },
@@ -29,7 +29,7 @@ export const toolDefinitions = [
     description:
       "Aplica un plan de reestructura de crédito elegido por el usuario. " +
       "Esta es una acción real: cambia el plan de pago vigente en la cuenta.",
-    input_schema: {
+    parametersJsonSchema: {
       type: "object",
       properties: {
         userId: { type: "string" },
