@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="es-MX">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Banorte · Crédito, resuelto en vivo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <div class="frame">
+    <header class="frame__header">
+      <div class="brand">
+        <span class="brand__mark">Banorte</span>
+        <span class="brand__divider"></span>
+        <span class="brand__unit">Crédito</span>
+      </div>
+      <p class="frame__tagline">Dile lo que quieres lograr. La pantalla se arma sola.</p>
+    </header>
+
+    <main id="thread" class="thread" aria-live="polite"></main>
+
+    <form id="composer" class="composer">
+      <input
+        id="composer-input"
+        class="composer__input"
+        type="text"
+        autocomplete="off"
+        placeholder="Ej. Quiero pagar menos intereses de mi tarjeta"
+      />
+      <button class="composer__submit" type="submit">Enviar</button>
+    </form>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
