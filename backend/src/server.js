@@ -1,26 +1,30 @@
-import "dotenv/config";
-import express from "express";
-import cors from "cors";
-import { connectDB } from "./db/connection.js";
-import { chatRouter } from "./routes/chat.js";
-import { actionRouter } from "./routes/action.js";
+import 'dotenv/config'; // <-- CLAVE: Carga el .env antes de hacer cualquier cosa
+import express from 'express';
+import cors from 'cors';
+import mongoose from 'mongoose';
+import { chatRouter } from './routes/chat.js';
+import { actionRouter } from './routes/action.js';
 
 const app = express();
+
+// Middlewares
 app.use(cors());
 app.use(express.json());
 
-app.get("/health", (_req, res) => res.json({ ok: true }));
-
-app.use("/api/chat", chatRouter);
-app.use("/api/action", actionRouter);
+// Rutas
+app.use('/api/chat', chatRouter);
+app.use('/api/action', actionRouter);
 
 const PORT = process.env.PORT || 3000;
 
-connectDB()
+// Conexión real a la base de datos y arranque del servidor
+mongoose.connect(process.env.MONGO_URL)
   .then(() => {
-    app.listen(PORT, () => console.log(`[server] escuchando en :${PORT}`));
+    console.log("🟢 Conectado REALMENTE a MongoDB Atlas");
+    app.listen(PORT, () => {
+      console.log(`[server] escuchando en :${PORT}`);
+    });
   })
-  .catch((err) => {
-    console.error("[server] no se pudo conectar a la DB:", err);
-    process.exit(1);
+  .catch(err => {
+    console.error("🔴 Error fatal al conectar a MongoDB:", err);
   });
