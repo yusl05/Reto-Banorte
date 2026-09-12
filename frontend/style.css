@@ -1,0 +1,307 @@
+/*
+  Tokens de diseño
+  Color:  --ink (texto), --paper (fondo, papel frío no cálido),
+          --red (marca Banorte), --red-deep (acentos activos),
+          --line (hairlines de estado de cuenta)
+  Type:   Fraunces (serif, para montos y encabezados — evoca un estado de cuenta impreso)
+          Inter (UI, cuerpo, controles)
+  Layout: una sola columna tipo "app bancaria", ancho de dispositivo,
+          las tarjetas A2UI se dibujan como recibos con borde perforado.
+*/
+
+:root {
+  --ink: #14110f;
+  --ink-soft: #4a463f;
+  --paper: #edeff2;
+  --paper-raised: #ffffff;
+  --red: #c8102e;
+  --red-deep: #7a0619;
+  --line: #d7dae0;
+  --radius: 14px;
+  --font-display: "Fraunces", serif;
+  --font-ui: "Inter", sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--ink);
+  font-family: var(--font-ui);
+  color: var(--ink);
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.frame {
+  width: 100%;
+  max-width: 440px;
+  height: min(820px, 92vh);
+  background: var(--paper);
+  border-radius: 28px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 40px 80px rgba(0, 0, 0, 0.45);
+}
+
+.frame__header {
+  background: var(--ink);
+  color: white;
+  padding: 22px 22px 18px;
+}
+
+.brand {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+
+.brand__mark {
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--red);
+}
+
+.brand__divider {
+  width: 1px;
+  height: 14px;
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.brand__unit {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.75);
+}
+
+.frame__tagline {
+  margin: 8px 0 0;
+  font-size: 13px;
+  line-height: 1.4;
+  color: rgba(255, 255, 255, 0.55);
+  max-width: 30ch;
+}
+
+.thread {
+  flex: 1;
+  overflow-y: auto;
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.bubble {
+  max-width: 82%;
+  padding: 11px 14px;
+  border-radius: 16px;
+  font-size: 14.5px;
+  line-height: 1.45;
+}
+
+.bubble--user {
+  align-self: flex-end;
+  background: var(--ink);
+  color: white;
+  border-bottom-right-radius: 4px;
+}
+
+.bubble--agent {
+  align-self: flex-start;
+  background: var(--paper-raised);
+  border: 1px solid var(--line);
+  color: var(--ink-soft);
+  border-bottom-left-radius: 4px;
+}
+
+/* --- Componentes A2UI --- */
+
+.card {
+  align-self: stretch;
+  background: var(--paper-raised);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 18px;
+  position: relative;
+}
+
+.card::before {
+  content: "";
+  position: absolute;
+  top: -6px;
+  left: 20px;
+  right: 20px;
+  height: 1px;
+  border-top: 1px dashed var(--line);
+}
+
+.card__eyebrow {
+  font-size: 12px;
+  color: var(--ink-soft);
+  margin: 0 0 2px;
+}
+
+.card__title {
+  font-family: var(--font-display);
+  font-size: 19px;
+  font-weight: 500;
+  margin: 0 0 14px;
+  line-height: 1.3;
+}
+
+.plan-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  margin-bottom: 8px;
+  cursor: pointer;
+  background: var(--paper);
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.plan-option:hover {
+  border-color: var(--red);
+}
+
+.plan-option--recommended {
+  border-color: var(--red);
+  background: #fbe9ec;
+}
+
+.plan-option__term {
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.plan-option__cat {
+  font-size: 12px;
+  color: var(--ink-soft);
+}
+
+.plan-option__amount {
+  font-family: var(--font-display);
+  font-size: 17px;
+  font-weight: 500;
+}
+
+.card__meta {
+  margin: 10px 0 14px;
+  font-size: 11.5px;
+  color: var(--ink-soft);
+  opacity: 0.8;
+}
+
+.card__cta {
+  width: 100%;
+  padding: 12px;
+  border: none;
+  border-radius: 10px;
+  background: var(--red);
+  color: white;
+  font-family: var(--font-ui);
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.card__cta:hover {
+  background: var(--red-deep);
+}
+
+.card__cta:disabled {
+  background: var(--line);
+  cursor: not-allowed;
+}
+
+.confirmation {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.confirmation__check {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: #12321f;
+  color: #79f2a4;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  margin-bottom: 6px;
+}
+
+.confirmation__row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13.5px;
+  padding: 6px 0;
+  border-bottom: 1px dashed var(--line);
+}
+
+.confirmation__row:last-of-type {
+  border-bottom: none;
+}
+
+.confirmation__note {
+  margin: 8px 0 0;
+  font-size: 12.5px;
+  color: var(--ink-soft);
+}
+
+.composer {
+  display: flex;
+  gap: 8px;
+  padding: 14px;
+  border-top: 1px solid var(--line);
+  background: var(--paper-raised);
+}
+
+.composer__input {
+  flex: 1;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 11px 13px;
+  font-family: var(--font-ui);
+  font-size: 14px;
+  background: var(--paper);
+}
+
+.composer__input:focus {
+  outline: 2px solid var(--red);
+  outline-offset: 1px;
+}
+
+.composer__submit {
+  border: none;
+  background: var(--ink);
+  color: white;
+  padding: 0 18px;
+  border-radius: 10px;
+  font-family: var(--font-ui);
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.composer__submit:hover {
+  background: var(--red-deep);
+}
+
+.typing {
+  align-self: flex-start;
+  font-size: 13px;
+  color: var(--ink-soft);
+  padding: 4px 6px;
+}
