@@ -1,4 +1,4 @@
-import Anthropic from "@anthropic-ai/sdk";
+import { GoogleGenAI } from "@google/genai";
 import { toolDefinitions, callTool } from "../mcp/tools.js";
 import { buildSystemPrompt } from "./systemPrompt.js";
 import {
@@ -8,8 +8,8 @@ import {
 } from "../a2ui/components.js";
 import { User } from "../db/models/User.js";
 
-const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
-const MODEL = process.env.ANTHROPIC_MODEL || "claude-sonnet-4-6";
+const gemini = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+const MODEL = process.env.GEMINI_MODEL || "gemini-2.5-flash";
 
 // Convierte el resultado crudo de una tool MCP en un componente A2UI
 function toolResultToA2UI(toolName, result) {
@@ -29,49 +29,61 @@ export async function runAgent({ userId, message }) {
 
   const systemPrompt = buildSystemPrompt(user);
 
-  let messages = [{ role: "user", content: message }];
+  const contents = [{ role: "user", parts: [{ text: message }] }];
   let uiToReturn = null;
   let finalText = "";
 
   // Loop de tool-use: el LLM puede pedir 1+ tools antes de responder en texto
   for (let turn = 0; turn < 4; turn++) {
-    const response = await anthropic.messages.create({
+    const response = await gemini.models.generateContent({
       model: MODEL,
-      max_tokens: 512,
-      system: systemPrompt,
-      tools: toolDefinitions,
-      messages,
+      contents,
+      config: {
+        systemInstruction: systemPrompt,
+        maxOutputTokens: 512,
+        tools: [{ functionDeclarations: toolDefinitions }],
+      },
     });
 
-    const toolUseBlocks = response.content.filter((b) => b.type === "tool_use");
-    const textBlocks = response.content.filter((b) => b.type === "text");
-    finalText = textBlocks.map((b) => b.text).join(" ").trim() || finalText;
+    const modelContent = response.candidates?.[0]?.content;
+    if (!modelContent) {
+      throw new Error("Gemini no devolvió contenido");
+    }
 
-    if (toolUseBlocks.length === 0) {
-      // El modelo ya terminó, no pidió más tools
+    const parts = modelContent.parts || [];
+    const functionCallParts = parts.filter((part) => part.functionCall);
+    const text = parts
+      .filter((part) => part.text)
+      .map((part) => part.text)
+      .join(" ")
+      .trim();
+    finalText = text || finalText;
+
+    if (functionCallParts.length === 0) {
       break;
     }
 
-    // Ejecutamos cada tool que pidió el agente (vía MCP) y regresamos resultados
-    messages.push({ role: "assistant", content: response.content });
+    contents.push(modelContent);
 
-    const toolResultsContent = [];
-    for (const block of toolUseBlocks) {
+    const functionResponses = [];
+    for (const part of functionCallParts) {
+      const { name, args = {} } = part.functionCall;
       let result;
       try {
-        result = await callTool(block.name, { userId, ...block.input });
-        const ui = toolResultToA2UI(block.name, result);
+        result = await callTool(name, { userId, ...args });
+        const ui = toolResultToA2UI(name, result);
         if (ui) uiToReturn = ui; // el último componente generado es el que se muestra
       } catch (err) {
         result = { error: err.message };
       }
-      toolResultsContent.push({
-        type: "tool_result",
-        tool_use_id: block.id,
-        content: JSON.stringify(result),
+      functionResponses.push({
+        functionResponse: {
+          name,
+          response: result,
+        },
       });
     }
-    messages.push({ role: "user", content: toolResultsContent });
+    contents.push({ role: "user", parts: functionResponses });
   }
 
   if (!uiToReturn && finalText) {

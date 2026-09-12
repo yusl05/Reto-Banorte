@@ -45,13 +45,15 @@ Usuario ──▶ Agente/LLM ──▶ MCP ──▶ DB ──▶ Cache ──�
 
 ```bash
 cp backend/.env.example backend/.env
-# agrega tu ANTHROPIC_API_KEY en backend/.env
+# agrega tu GEMINI_API_KEY en backend/.env
 docker compose up --build
 ```
 
-- Backend + Mongo quedan arriba con `docker-compose.yml`.
-- Al iniciar, `scripts/seed.js` crea un usuario demo con saldo de $18,400 (el mismo número del mockup del PDF).
-- Abre `frontend/index.html` en el navegador (o sírvelo con cualquier static server) — apunta a `http://localhost:3000`.
+- Frontend: `http://localhost:8080`.
+- Backend: `http://localhost:3000`.
+- MongoDB queda disponible en `localhost:27017`.
+- Al iniciar, `scripts/seed.js` crea `demo-user` con saldo de $18,400 si todavía no existe.
+- El frontend usa `/api` y Nginx lo redirige internamente al backend; ya no es necesario abrir `frontend/index.html` directamente.
 
 ## Stack (según pizarrón)
 
