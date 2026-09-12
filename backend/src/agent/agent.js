@@ -1,97 +1,47 @@
 import { GoogleGenAI } from "@google/genai";
-import { toolDefinitions, callTool } from "../mcp/tools.js";
-import { buildSystemPrompt } from "./systemPrompt.js";
-import {
-  creditRestructureCard,
-  planConfirmationCard,
-  textCard,
-} from "../a2ui/components.js";
-import { User } from "../db/models/User.js";
 
-const gemini = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-const MODEL = process.env.GEMINI_MODEL || "gemini-2.5-flash";
+export async function processUserMessage(userMessage, contextData) {
+  try {
+    const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
-// Convierte el resultado crudo de una tool MCP en un componente A2UI
-function toolResultToA2UI(toolName, result) {
-  if (toolName === "get_credit_plans") return creditRestructureCard(result);
-  if (toolName === "apply_credit_plan") return planConfirmationCard(result);
-  return null;
-}
+    const systemInstruction = `
+      Eres el Liquidity Copilot de Banorte.
+      Contexto actual de la conversación: ${contextData.activePromptContext}
+      Datos de la cuenta del usuario: Deuda $${contextData.accountDetails.totalDebt}, Límite de Crédito $${contextData.accountDetails.creditLimit}.
+      
+      Debes responder SIEMPRE con un objeto JSON válido con esta estructura exacta:
+      {
+        "reply": "Tu mensaje de texto de respuesta para el usuario",
+        "ui": null,
+        "newContext": "Un breve resumen actualizado de lo que quiere el usuario",
+        "currentIntent": "Ej. DEBT_RESTRUCTURE",
+        "dashboardUpdates": {
+          "layout": "single-focus-dashboard",
+          "highlightedPlan": "12"
+        }
+      }
+      Analiza la intención del usuario y ajusta tu respuesta y las sugerencias del dashboard basándote en sus datos financieros.
+    `;
 
-/**
- * Punto de entrada del agente. Recibe el mensaje del usuario (o una acción
- * disparada por un componente ya renderizado) y devuelve:
- *   { reply: string, ui: <objeto A2UI o null> }
- */
-export async function runAgent({ userId, message }) {
-  const user = await User.findOne({ userId });
-  if (!user) throw new Error(`Usuario no encontrado: ${userId}`);
-
-  const systemPrompt = buildSystemPrompt(user);
-
-  const contents = [{ role: "user", parts: [{ text: message }] }];
-  let uiToReturn = null;
-  let finalText = "";
-
-  // Loop de tool-use: el LLM puede pedir 1+ tools antes de responder en texto
-  for (let turn = 0; turn < 4; turn++) {
-    const response = await gemini.models.generateContent({
-      model: MODEL,
-      contents,
+    const response = await ai.models.generateContent({
+      model: process.env.GEMINI_MODEL || "gemini-3.6-flash",
+      contents: [{ role: "user", parts: [{ text: userMessage }] }],
       config: {
-        systemInstruction: systemPrompt,
-        maxOutputTokens: 512,
-        tools: [{ functionDeclarations: toolDefinitions }],
-      },
+        systemInstruction: systemInstruction,
+        temperature: 0.2,
+        responseMimeType: "application/json", // Fuerza a Gemini a devolver JSON
+      }
     });
 
-    const modelContent = response.candidates?.[0]?.content;
-    if (!modelContent) {
-      throw new Error("Gemini no devolvió contenido");
-    }
+    // Como pedimos JSON, parseamos el texto directamente
+    return JSON.parse(response.text);
 
-    const parts = modelContent.parts || [];
-    const functionCallParts = parts.filter((part) => part.functionCall);
-    const text = parts
-      .filter((part) => part.text)
-      .map((part) => part.text)
-      .join(" ")
-      .trim();
-    finalText = text || finalText;
-
-    if (functionCallParts.length === 0) {
-      break;
-    }
-
-    contents.push(modelContent);
-
-    const functionResponses = [];
-    for (const part of functionCallParts) {
-      const { name, args = {} } = part.functionCall;
-      let result;
-      try {
-        result = await callTool(name, { userId, ...args });
-        const ui = toolResultToA2UI(name, result);
-        if (ui) uiToReturn = ui; // el último componente generado es el que se muestra
-      } catch (err) {
-        result = { error: err.message };
-      }
-      functionResponses.push({
-        functionResponse: {
-          name,
-          response: result,
-        },
-      });
-    }
-    contents.push({ role: "user", parts: functionResponses });
+  } catch (error) {
+    console.error("🔴 Error detallado en el agente de IA:", error);
+    return {
+      reply: "Error técnico al conectar con el modelo.",
+      ui: null,
+      newContext: contextData.activePromptContext
+    };
   }
-
-  if (!uiToReturn && finalText) {
-    uiToReturn = textCard(finalText);
-  }
-
-  return {
-    reply: finalText || "Listo.",
-    ui: uiToReturn,
-  };
 }
