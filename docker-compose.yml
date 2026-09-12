@@ -21,7 +21,7 @@ services:
     depends_on:
       - mongo
     volumes:
-      - ./backend:/app
+      - ./backend:/app:z
       - /app/node_modules
 
 volumes:
