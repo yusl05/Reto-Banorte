@@ -163,7 +163,9 @@ async function sendMessage(message) {
       return;
     }
     addBubble(data.reply, "agent");
-    renderUI(data.ui);
+    if (data.ui && data.ui.component !== "text_card") {
+      renderUI(data.ui);
+    }
   } catch (err) {
     removeTyping();
     addBubble(`No pude conectar con el agente: ${err.message}`, "agent");
