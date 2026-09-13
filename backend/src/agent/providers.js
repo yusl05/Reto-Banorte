@@ -17,8 +17,9 @@ async function requestJson(provider, url, options) {
   try {
     const response = await fetch(url, { ...options, signal: timeoutSignal() });
     const body = await response.json().catch(() => null);
-    if (!response.ok) {
-      throw new ProviderError(provider, `HTTP ${response.status}`, {
+        if (!response.ok) {
+        const detail = body?.error?.message || JSON.stringify(body) || "sin detalle";
+        throw new ProviderError(provider, `HTTP ${response.status}: ${detail}`, {
         retryable: response.status === 408 || response.status === 429 || response.status >= 500,
       });
     }
@@ -114,12 +115,25 @@ function geminiMessages(messages) {
       return {
         role: "model",
         parts: message.toolCalls?.length
-          ? message.toolCalls.map((call) => ({ functionCall: { name: call.name, args: call.input } }))
+          ? message.toolCalls.map((call) => {
+              const part = { functionCall: { name: call.name, args: call.input } };
+              if (call.thoughtSignature) part.thoughtSignature = call.thoughtSignature;
+              return part;
+            })
           : [{ text: message.content || "" }],
       };
     }
     return { role: "user", parts: [{ text: message.content || "" }] };
   });
+}
+
+function sanitizeSchemaForGemini(schema) {
+  if (Array.isArray(schema)) return schema.map(sanitizeSchemaForGemini);
+  if (!schema || typeof schema !== "object") return schema;
+  const { $schema, $id, additionalProperties, ...rest } = schema;
+  return Object.fromEntries(
+    Object.entries(rest).map(([key, value]) => [key, sanitizeSchemaForGemini(value)])
+  );
 }
 
 function geminiProvider({ apiKey, endpoint, model }) {
@@ -134,10 +148,10 @@ function geminiProvider({ apiKey, endpoint, model }) {
           systemInstruction: { parts: [{ text: systemPrompt }] },
           contents: geminiMessages(messages),
           tools: [{ functionDeclarations: tools.map((tool) => ({
-            name: tool.name,
-            description: tool.description,
-            parameters: tool.inputSchema,
-          })) }],
+          name: tool.name,
+          description: tool.description,
+          parameters: sanitizeSchemaForGemini(tool.inputSchema),
+        })) }],
           generationConfig: { maxOutputTokens: 512 },
         }),
       });
@@ -147,6 +161,7 @@ function geminiProvider({ apiKey, endpoint, model }) {
         id: `gemini-${index}`,
         name: part.functionCall.name,
         input: part.functionCall.args || {},
+        thoughtSignature: part.thoughtSignature,
       }));
       const text = parts.filter((part) => part.text).map((part) => part.text).join(" ").trim();
       if (!text && !toolCalls.length) throw new ProviderError("gemini", "respuesta inválida", { retryable: true });
