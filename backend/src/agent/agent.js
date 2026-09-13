@@ -5,6 +5,7 @@ import {
   creditRestructureCard,
   planConfirmationCard,
   textCard,
+  clarificationCard,
   validateA2UI,
 } from "../a2ui/components.js";
 import { User } from "../db/models/User.js";
@@ -63,7 +64,13 @@ async function runWithProvider(provider, { userId, message, systemPrompt, tools 
     }
   }
 
-  if (!uiToReturn && finalText) uiToReturn = validateA2UI(textCard(finalText));
+  const CLARIFICATION_TAG = "[ACLARACION]";
+  if (!uiToReturn && finalText.trim().startsWith(CLARIFICATION_TAG)) {
+    finalText = finalText.trim().slice(CLARIFICATION_TAG.length).trim();
+    uiToReturn = validateA2UI(clarificationCard(finalText));
+  } else if (!uiToReturn && finalText) {
+    uiToReturn = validateA2UI(textCard(finalText));
+  }
   return { reply: finalText || "Listo.", ui: uiToReturn, mutationExecuted };
 }
 

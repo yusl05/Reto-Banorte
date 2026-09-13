@@ -301,8 +301,10 @@ body {
 
 .compare-row__fill {
   height: 100%;
+  width: 0;
   border-radius: 4px;
   background: var(--ink);
+  transition: width 0.6s ease;
 }
 
 .compare-row--current .compare-row__fill {
@@ -586,9 +588,132 @@ body {
   background: var(--red-deep);
 }
 
+.clarification {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.clarification__icon {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.75);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.clarification__text {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.45;
+  color: rgba(255, 255, 255, 0.85);
+}
+
 .typing {
   align-self: flex-start;
   font-size: 13px;
   color: rgba(255, 255, 255, 0.5);
   padding: 4px 6px;
+}
+
+/* -- gráfica de evolución del saldo (SVG puro) -- */
+
+.balance-chart {
+  margin-bottom: 8px;
+}
+
+.balance-chart__svg {
+  width: 100%;
+  height: 160px;
+  display: block;
+}
+
+.balance-chart__area {
+  fill: rgba(212, 21, 47, 0.12);
+  stroke: none;
+}
+
+.balance-chart__line {
+  fill: none;
+  stroke: var(--red);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.balance-chart__dot {
+  fill: var(--paper-raised);
+  stroke: var(--red);
+  stroke-width: 2;
+}
+
+.balance-chart__dot--last {
+  fill: var(--red);
+  stroke: var(--paper-raised);
+}
+
+.balance-chart__labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  color: var(--ink-soft);
+  margin-top: 6px;
+}
+
+/* -- barras de ahorro potencial en intereses -- */
+
+.interest-savings {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-bottom: 10px;
+}
+
+.interest-savings__row {
+  width: 100%;
+}
+
+.interest-savings__top {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-size: 13.5px;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+
+.interest-savings__amount {
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: 500;
+}
+
+.interest-savings__track {
+  height: 8px;
+  border-radius: 4px;
+  background: var(--line);
+  overflow: hidden;
+}
+
+.interest-savings__fill {
+  height: 100%;
+  width: 0;
+  border-radius: 4px;
+  background: var(--ink);
+  transition: width 0.6s ease;
+}
+
+.interest-savings__fill--current {
+  background: #9b958a;
+}
+
+.interest-savings__fill--best {
+  background: var(--red);
 }

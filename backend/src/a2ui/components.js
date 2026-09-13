@@ -46,11 +46,24 @@ export function planConfirmationCard({ months, cat, monthlyPayment }) {
   };
 }
 
+export function clarificationCard(text) {
+  return {
+    component: "clarification_card",
+    props: { text },
+    actions: [],
+  };
+}
+
 export function validateA2UI(ui) {
   if (!ui || typeof ui !== "object" || typeof ui.component !== "string" || !ui.props) {
     throw new Error("Componente A2UI inválido");
   }
-  const allowed = new Set(["credit_restructure_card", "plan_confirmation_card", "text_card"]);
+  const allowed = new Set([
+    "credit_restructure_card",
+    "plan_confirmation_card",
+    "text_card",
+    "clarification_card",
+  ]);
   if (!allowed.has(ui.component)) throw new Error(`Componente A2UI desconocido: ${ui.component}`);
   if (!Array.isArray(ui.actions || []) || ui.actions.some(
     (action) => !action || typeof action.id !== "string" || typeof action.label !== "string"

@@ -38,8 +38,10 @@ async function getCreditPlans({ userId }) {
     { balance: account.balance, rate: account.currentRate, activePlan: account.activePlan?.months ?? null },
     async () => ({
       balance: account.balance,
+      currentRate: account.currentRate,
       cardLastFour: account.cardLastFour,
       activePlan: account.activePlan,
+      balanceHistory: account.balanceHistory || [],
       options: Object.entries(PLAN_RULES).map(([months, rule]) => ({
         months: Number(months),
         cat: +(account.currentRate + rule.catDelta).toFixed(1),
@@ -78,12 +80,17 @@ async function applyCreditPlan({ userId, months }) {
 const toolSpecs = {
   get_credit_plans: {
     description: "Obtiene opciones de reestructura de la cuenta autenticada.",
-    inputSchema: { userId: z.string() },
+    // userId es opcional en el schema que ve el LLM a propósito: el backend
+    // lo inyecta automáticamente a partir de la sesión (ver agent.js), así
+    // que el modelo nunca debe pedírselo al usuario. Si fuera requerido,
+    // Gemini lo trataría como un dato obligatorio que le falta y se lo
+    // preguntaría al usuario en vez de llamar la tool.
+    inputSchema: { userId: z.string().optional() },
     handler: getCreditPlans,
   },
   apply_credit_plan: {
     description: "Aplica un plan de reestructura de 12, 18 o 24 meses.",
-    inputSchema: { userId: z.string(), months: z.number() },
+    inputSchema: { userId: z.string().optional(), months: z.number() },
     handler: applyCreditPlan,
   },
 };
