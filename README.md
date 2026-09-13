@@ -52,7 +52,11 @@ docker compose up --build
 
 - Backend + Mongo quedan arriba con `docker-compose.yml`; Mongo sólo es accesible dentro de la red de Docker.
 - Al iniciar, `scripts/seed.js` crea o conserva de forma idempotente un usuario demo con saldo de $18,400 (el mismo número del mockup del PDF).
-- Abre `frontend/index.html` en el navegador (o sírvelo con cualquier static server) — apunta a `http://localhost:3000`.
+- Abre la aplicación en `http://localhost:8080` (o sírvela con un servidor
+  estático, nunca con `file://`) — el frontend usa el proxy `/api/` de Nginx.
+  Si usas otro origen, agrégalo a `FRONTEND_ORIGIN` y conserva
+  `credentials: "include"` para que la cookie de sesión viaje en las
+  peticiones.
 - El frontend solicita una sesión demo mediante cookie HttpOnly antes de enviar chat o acciones. Si usas otro static server, define `FRONTEND_ORIGIN`.
 
 ## Seguridad y configuración

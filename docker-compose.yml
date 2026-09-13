@@ -20,14 +20,16 @@ services:
         required: false
     environment:
       - MONGO_URL=mongodb://mongo:27017/banorte_credito
-      - FRONTEND_ORIGIN=http://localhost:8080
+      - FRONTEND_ORIGIN=http://localhost:8080,http://127.0.0.1:8080
     depends_on:
       mongo:
         condition: service_healthy
     volumes:
       - ./backend:/app
       - /app/node_modules
-    command: sh -c "npm run seed && npm start"
+    # The source bind mount reuses the node_modules volume; install here so
+    # dependency changes cannot leave a stale volume and a crashed backend.
+    command: sh -c "npm install --omit=dev && npm run seed && npm start"
 
   frontend:
     build: ./frontend
