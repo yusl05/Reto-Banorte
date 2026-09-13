@@ -1,18 +1,37 @@
 /*
-  Tokens de diseño actualizados (Estilo Moderno / Tech + Single Scroll Fix)
+  Tokens de diseño
+  Concepto: "recibo bancario en vivo". El estado de crédito se lee como
+  un estado de cuenta impreso (serif para montos, línea punteada de
+  perforación); el copiloto es un panel de chat discreto al lado, que
+  no compite visualmente con los números.
+
+  Color:  --ink (texto/fondo header), --paper (papel frío, no beige),
+          --red (marca Banorte), --red-deep (acentos activos/hover),
+          --ok (verde, solo para "ahorras $X" — nunca decorativo)
+  Type:   Fraunces (montos, títulos) / Inter (UI, cuerpo, controles)
+  Layout: dos columnas en desktop (estado | copiloto), apiladas en móvil
 */
 
+/*
+  Paleta basada en los colores oficiales de marca Banorte:
+  rojo #EC0029, y su familia de grises (#F5F5F5, #C7C9C9, #6A6867).
+  Se atenúan los extremos (nada de blanco puro ni rojo a tope de
+  saturación) para bajar el brillo de pantalla en sesiones largas.
+*/
 :root {
-  --ink: #0f1115;
-  --ink-soft: #525866;
-  --paper: #f4f5f7;
-  --paper-raised: #ffffff;
-  --red: #f02d3a;
-  --red-deep: #a81c25;
-  --line: #e2e4e9;
-  --radius: 16px;
-  --font-display: "Syne", "Inter", sans-serif;
-  --font-ui: "Plus Jakarta Sans", system-ui, -apple-system, sans-serif;
+  --ink: #221f1d;
+  --ink-soft: #6a6867;
+  --paper: #d9d7d4;
+  --paper-raised: #f1efec;
+  --red: #d4152f;
+  --red-deep: #8c0019;
+  --red-wash: #f2dade;
+  --ok: #1f6d45;
+  --ok-wash: #e0ece5;
+  --line: #c7c9c9;
+  --radius: 14px;
+  --font-display: "Fraunces", serif;
+  --font-ui: "Inter", sans-serif;
 }
 
 * {
@@ -21,75 +40,37 @@
 
 body {
   margin: 0;
-  padding: 0;
-  min-height: 100vh;
-  background: var(--paper);
+  background: var(--ink);
   font-family: var(--font-ui);
   color: var(--ink);
-  -webkit-font-smoothing: antialiased;
+  min-height: 100vh;
 }
 
-/* ==========================================================================
-    Reglas de Grid para el contenedor padre .app-layout (70% / 30%)
-    ========================================================================== */
-
-.app-layout {
+.app {
   display: grid;
-  grid-template-columns: 2fr 1fr;
-  gap: 20px;
-  height: 100vh;
-  max-height: 100vh;
-  width: 100vw;
-  max-width: 100vw;
-  padding: 16px;
-  margin: 0 auto;
-  box-sizing: border-box;
-  overflow: hidden; 
+  grid-template-columns: minmax(0, 1.15fr) minmax(340px, 0.85fr);
+  min-height: 100vh;
 }
 
-.app-layout > * {
-  min-width: 0;
-  min-height: 0;
+@media (max-width: 900px) {
+  .app {
+    grid-template-columns: 1fr;
+  }
 }
 
-.main-column {
-  overflow-y: auto;
-  border-radius: 28px;
-  background: var(--paper-raised);
-  box-shadow: 0 10px 30px rgba(15, 17, 21, 0.04);
-  padding: 24px;
-  height: 100%;
-}
+/* ============ ESTADO DE CRÉDITO ============ */
 
-.col--chat {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  min-height: 0;
-  min-width: 0;
-  overflow: hidden;
-}
-
-/* --- Componentes del Chat de la columna derecha --- */
-
-.frame {
-  width: 100%;
-  max-width: 100%;
-  height: 100%;
+.statement {
   background: var(--paper);
-  border-radius: 28px;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  box-shadow: 0 20px 40px rgba(15, 17, 21, 0.08);
-  border: 1px solid var(--line);
+  padding: 28px clamp(20px, 4vw, 48px) 48px;
+  overflow-y: auto;
 }
 
-.frame__header {
-  background: var(--ink);
-  color: white;
-  padding: 22px 22px 18px;
-  flex-shrink: 0;
+.statement__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 28px;
 }
 
 .brand {
@@ -100,29 +81,304 @@ body {
 
 .brand__mark {
   font-family: var(--font-display);
-  font-size: 22px;
-  font-weight: 700;
-  letter-spacing: -0.02em;
+  font-size: 21px;
+  font-weight: 600;
   color: var(--red);
 }
 
 .brand__divider {
   width: 1px;
-  height: 14px;
-  background: rgba(255, 255, 255, 0.2);
+  height: 13px;
+  background: var(--line);
 }
 
 .brand__unit {
-  font-size: 13.5px;
-  font-weight: 500;
-  color: rgba(255, 255, 255, 0.7);
+  font-size: 13px;
+  color: var(--ink-soft);
 }
 
-.frame__tagline {
-  margin: 8px 0 0;
+.statement__live {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--ink-soft);
+}
+
+.statement__live i {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--ok);
+  display: inline-block;
+}
+
+.statement__loading {
+  color: var(--ink-soft);
+  font-size: 14px;
+}
+
+.statement__error {
+  color: var(--red-deep);
+  font-size: 14px;
+  max-width: 40ch;
+}
+
+/* -- tarjeta física -- */
+
+.credit-card {
+  background: linear-gradient(155deg, #3a0410 0%, var(--red-deep) 45%, var(--red) 100%);
+  border-radius: 16px;
+  padding: 22px 24px;
+  color: #f0eeec;
+  max-width: 380px;
+  margin-bottom: 26px;
+  box-shadow: 0 16px 32px rgba(122, 6, 25, 0.25);
+}
+
+.credit-card__top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 30px;
+}
+
+.credit-card__brand {
+  font-family: var(--font-display);
+  font-size: 19px;
+  font-weight: 600;
+}
+
+.credit-card__tier {
+  font-size: 11px;
+  letter-spacing: 0.03em;
+  color: rgba(255, 255, 255, 0.75);
+}
+
+.credit-card__number {
+  font-family: var(--font-ui);
+  font-size: 18px;
+  letter-spacing: 0.08em;
+  margin-bottom: 18px;
+}
+
+.credit-card__bottom {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.75);
+}
+
+.credit-card__holder {
+  font-size: 13px;
+  color: #f0eeec;
+  font-weight: 500;
+}
+
+/* -- resumen de saldo -- */
+
+.summary-row {
+  display: flex;
+  gap: 28px;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+}
+
+.summary-item__label {
+  font-size: 12.5px;
+  color: var(--ink-soft);
+  margin: 0 0 4px;
+}
+
+.summary-item__value {
+  font-family: var(--font-display);
+  font-size: 30px;
+  font-weight: 500;
+  margin: 0;
+}
+
+.summary-item__value--tag {
+  display: inline-block;
+  font-family: var(--font-ui);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--red-deep);
+  background: var(--red-wash);
+  padding: 2px 8px;
+  border-radius: 20px;
+  margin-left: 8px;
+  vertical-align: middle;
+}
+
+.usage-bar {
+  margin: 18px 0 30px;
+}
+
+.usage-bar__track {
+  height: 6px;
+  border-radius: 4px;
+  background: var(--line);
+  overflow: hidden;
+  margin-bottom: 6px;
+}
+
+.usage-bar__fill {
+  height: 100%;
+  background: var(--red);
+  border-radius: 4px;
+}
+
+.usage-bar__caption {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: var(--ink-soft);
+}
+
+/* -- comparativa de intereses -- */
+
+.section-title {
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 500;
+  margin: 34px 0 4px;
+}
+
+.section-subtitle {
+  font-size: 13px;
+  color: var(--ink-soft);
+  margin: 0 0 16px;
+}
+
+.compare {
+  border-top: 1px dashed var(--line);
+  padding-top: 16px;
+}
+
+.compare-row {
+  padding: 12px 0;
+  border-bottom: 1px dashed var(--line);
+}
+
+.compare-row:last-child {
+  border-bottom: none;
+}
+
+.compare-row__top {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 8px;
+}
+
+.compare-row__label {
+  font-size: 13.5px;
+  font-weight: 600;
+}
+
+.compare-row__recommended {
+  font-size: 10.5px;
+  font-weight: 700;
+  color: var(--red-deep);
+  background: var(--red-wash);
+  padding: 2px 7px;
+  border-radius: 20px;
+  margin-left: 8px;
+}
+
+.compare-row__amount {
+  font-family: var(--font-display);
+  font-size: 16px;
+}
+
+.compare-row__track {
+  height: 8px;
+  border-radius: 4px;
+  background: var(--line);
+  overflow: hidden;
+}
+
+.compare-row__fill {
+  height: 100%;
+  border-radius: 4px;
+  background: var(--ink);
+}
+
+.compare-row--current .compare-row__fill {
+  background: #9b958a;
+}
+
+.compare-row--best .compare-row__fill {
+  background: var(--red);
+}
+
+.compare-row__meta {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: var(--ink-soft);
+  margin-top: 6px;
+}
+
+.compare-row__save {
+  color: var(--ok);
+  font-weight: 600;
+}
+
+/* -- CTA hacia el copiloto -- */
+
+.statement-cta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  margin-top: 28px;
+  padding: 14px 18px;
+  border: none;
+  border-radius: 12px;
+  background: var(--ink);
+  color: #f0eeec;
+  font-family: var(--font-ui);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.statement-cta:hover {
+  background: var(--red-deep);
+}
+
+/* ============ COPILOTO (chat) ============ */
+
+.copilot {
+  background: var(--ink);
+  color: #f0eeec;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.copilot__header {
+  padding: 28px 24px 18px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.copilot__title {
+  font-family: var(--font-display);
+  font-size: 19px;
+  font-weight: 500;
+  margin: 0 0 6px;
+}
+
+.copilot__tagline {
+  margin: 0;
   font-size: 13px;
   line-height: 1.4;
-  color: rgba(255, 255, 255, 0.5);
+  color: rgba(255, 255, 255, 0.55);
+  max-width: 34ch;
 }
 
 .thread {
@@ -132,49 +388,52 @@ body {
   display: flex;
   flex-direction: column;
   gap: 14px;
-  min-height: 0;
 }
 
 .bubble {
-  max-width: 82%;
-  padding: 12px 16px;
-  border-radius: 18px;
-  font-size: 14px;
-  line-height: 1.5;
-  letter-spacing: -0.01em;
+  max-width: 86%;
+  padding: 11px 14px;
+  border-radius: 16px;
+  font-size: 14.5px;
+  line-height: 1.45;
 }
 
 .bubble--user {
   align-self: flex-end;
-  background: var(--ink);
+  background: var(--red);
   color: white;
   border-bottom-right-radius: 4px;
 }
 
 .bubble--agent {
   align-self: flex-start;
-  background: var(--paper-raised);
-  border: 1px solid var(--line);
-  color: var(--ink-soft);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.85);
   border-bottom-left-radius: 4px;
 }
 
-/* --- Componentes A2UI (Tarjetas dentro del chat) --- */
+/* --- Componentes A2UI (dentro del chat) --- */
 
 .card {
   align-self: stretch;
-  background: var(--paper-raised);
-  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: var(--radius);
   padding: 18px;
-  position: relative;
+  color: #f0eeec;
+}
+
+.card__eyebrow {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.6);
+  margin: 0 0 2px;
 }
 
 .card__title {
   font-family: var(--font-display);
   font-size: 18px;
-  font-weight: 700;
-  letter-spacing: -0.02em;
+  font-weight: 500;
   margin: 0 0 14px;
   line-height: 1.3;
 }
@@ -184,110 +443,152 @@ body {
   align-items: center;
   justify-content: space-between;
   padding: 12px 14px;
-  border: 1px solid var(--line);
-  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 10px;
   margin-bottom: 8px;
   cursor: pointer;
-  background: var(--paper);
-  transition: all 0.2s ease;
+  background: rgba(255, 255, 255, 0.03);
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.plan-option:hover {
+  border-color: var(--red);
 }
 
 .plan-option--recommended {
   border-color: var(--red);
-  background: #fff5f5;
+  background: rgba(200, 16, 46, 0.18);
+}
+
+.plan-option__term {
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.plan-option__cat {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.plan-option__amount {
+  font-family: var(--font-display);
+  font-size: 17px;
+  font-weight: 500;
+}
+
+.card__meta {
+  margin: 10px 0 14px;
+  font-size: 11.5px;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.card__cta {
+  width: 100%;
+  padding: 12px;
+  border: none;
+  border-radius: 10px;
+  background: var(--red);
+  color: white;
+  font-family: var(--font-ui);
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.card__cta:hover {
+  background: var(--red-deep);
+}
+
+.card__cta:disabled {
+  background: rgba(255, 255, 255, 0.15);
+  cursor: not-allowed;
+}
+
+.confirmation {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.confirmation__check {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: #3a2e12;
+  color: #f2c464;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  margin-bottom: 6px;
+}
+
+.confirmation__row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13.5px;
+  padding: 6px 0;
+  border-bottom: 1px dashed rgba(255, 255, 255, 0.12);
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.confirmation__row:last-of-type {
+  border-bottom: none;
+}
+
+.confirmation__note {
+  margin: 8px 0 0;
+  font-size: 12.5px;
+  color: rgba(255, 255, 255, 0.55);
 }
 
 .composer {
   display: flex;
   gap: 8px;
   padding: 14px;
-  border-top: 1px solid var(--line);
-  background: var(--paper-raised);
-  flex-shrink: 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .composer__input {
   flex: 1;
-  border: 1px solid var(--line);
-  border-radius: 12px;
-  padding: 11px 14px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 10px;
+  padding: 11px 13px;
   font-family: var(--font-ui);
   font-size: 14px;
-  background: var(--paper);
-  color: var(--ink);
-  outline: none;
+  background: rgba(255, 255, 255, 0.05);
+  color: #f0eeec;
+}
+
+.composer__input::placeholder {
+  color: rgba(255, 255, 255, 0.4);
 }
 
 .composer__input:focus {
-  border-color: var(--ink-soft);
+  outline: 2px solid var(--red);
+  outline-offset: 1px;
 }
 
 .composer__submit {
   border: none;
-  background: var(--ink);
+  background: var(--red);
   color: white;
   padding: 0 18px;
-  border-radius: 12px;
+  border-radius: 10px;
   font-family: var(--font-ui);
   font-weight: 600;
   font-size: 14px;
   cursor: pointer;
 }
 
-/* --- Media Query para móviles / pantallas pequeñas (Una sola barra fluida) --- */
-@media (max-width: 1200px) {
-  body {
-    overflow-y: auto; /* Permite que la página entera scrollear fluidamente */
-  }
-
-  .app-layout {
-    display: flex;
-    flex-direction: column;
-    height: auto;
-    max-height: none;
-    overflow-y: visible;
-    padding: 12px;
-    gap: 16px;
-  }
-
-  .main-column {
-    height: auto;
-    max-height: none;
-    overflow-y: visible; /* Elimina la barra interna de la columna principal */
-  }
-
-  .col--chat {
-    height: 500px; /* Altura controlada solo para el chat móvil */
-    overflow: hidden;
-  }
+.composer__submit:hover {
+  background: var(--red-deep);
 }
 
-/* --- Animación de Agente Escribiendo --- */
-.typing-indicator {
-  display: flex;
-  gap: 4px;
-  padding: 14px 18px;
-  background: var(--paper-raised);
-  border: 1px solid var(--line);
-  border-radius: 18px;
-  border-bottom-left-radius: 4px;
-  width: fit-content;
+.typing {
   align-self: flex-start;
-}
-
-.typing-dot {
-  width: 6px;
-  height: 6px;
-  background: var(--ink-soft);
-  border-radius: 50%;
-  animation: typing 1.4s infinite ease-in-out;
-}
-
-.typing-dot:nth-child(1) { animation-delay: 0s; }
-.typing-dot:nth-child(2) { animation-delay: 0.2s; }
-.typing-dot:nth-child(3) { animation-delay: 0.4s; }
-
-@keyframes typing {
-  0%, 100% { transform: translateY(0); opacity: 0.4; }
-  50% { transform: translateY(-4px); opacity: 1; }
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.5);
+  padding: 4px 6px;
 }

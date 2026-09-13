@@ -6,7 +6,7 @@
  *  - actions: qué eventos puede disparar de vuelta hacia el agente
  */
 
-export function creditRestructureCard({ balance, cardLastFour, options, cacheHit }) {
+export function creditRestructureCard({ balance, cardLastFour, options, cacheHit, activePlan }) {
   return {
     component: "credit_restructure_card",
     props: {
@@ -18,6 +18,7 @@ export function creditRestructureCard({ balance, cardLastFour, options, cacheHit
         monthlyPayment: o.monthlyPayment,
         recommended: o.months === 12,
       })),
+      activePlan: activePlan || null,
       meta: cacheHit ? "Datos reutilizados de tu última consulta" : "Cálculo actualizado ahora",
     },
     actions: [
@@ -35,14 +36,41 @@ export function planConfirmationCard({ months, cat, monthlyPayment }) {
   return {
     component: "plan_confirmation_card",
     props: {
-      title: "Tu nuevo plan quedó activo",
+      title: "Tu solicitud de reestructura fue enviada a revisión",
       months,
       cat,
       monthlyPayment,
-      note: "Ya puedes ver tu nueva mensualidad reflejada en tu próximo estado de cuenta.",
+      note: "Por seguridad, toda solicitud de cambio de crédito pasa por los filtros de validación de Banorte antes de activarse. Te notificaremos cuando quede confirmada.",
     },
     actions: [],
   };
+}
+
+export function clarificationCard(text) {
+  return {
+    component: "clarification_card",
+    props: { text },
+    actions: [],
+  };
+}
+
+export function validateA2UI(ui) {
+  if (!ui || typeof ui !== "object" || typeof ui.component !== "string" || !ui.props) {
+    throw new Error("Componente A2UI inválido");
+  }
+  const allowed = new Set([
+    "credit_restructure_card",
+    "plan_confirmation_card",
+    "text_card",
+    "clarification_card",
+  ]);
+  if (!allowed.has(ui.component)) throw new Error(`Componente A2UI desconocido: ${ui.component}`);
+  if (!Array.isArray(ui.actions || []) || ui.actions.some(
+    (action) => !action || typeof action.id !== "string" || typeof action.label !== "string"
+  )) {
+    throw new Error("Acciones A2UI inválidas");
+  }
+  return ui;
 }
 
 export function textCard(text) {
