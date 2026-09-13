@@ -2,6 +2,7 @@ import express from "express";
 import cors from "cors";
 import { createChatRouter } from "./routes/chat.js";
 import { createActionRouter } from "./routes/action.js";
+import { createAccountRouter } from "./routes/account.js";
 import { sessionRouter } from "./routes/session.js";
 import { runAgent } from "./agent/agent.js";
 
@@ -22,6 +23,7 @@ export function createApp({ agent = runAgent, frontendOrigin } = {}) {
 
   app.get("/health", (_req, res) => res.json({ ok: true }));
   app.use("/api/session", sessionRouter);
+  app.use("/api/account", createAccountRouter());
   app.use("/api/chat", createChatRouter(agent));
   app.use("/api/action", createActionRouter(agent));
   app.use((error, _req, res, next) => {

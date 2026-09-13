@@ -1,22 +1,34 @@
 /*
   Tokens de diseño
-  Color:  --ink (texto), --paper (fondo, papel frío no cálido),
-          --red (marca Banorte), --red-deep (acentos activos),
-          --line (hairlines de estado de cuenta)
-  Type:   Fraunces (serif, para montos y encabezados — evoca un estado de cuenta impreso)
-          Inter (UI, cuerpo, controles)
-  Layout: una sola columna tipo "app bancaria", ancho de dispositivo,
-          las tarjetas A2UI se dibujan como recibos con borde perforado.
+  Concepto: "recibo bancario en vivo". El estado de crédito se lee como
+  un estado de cuenta impreso (serif para montos, línea punteada de
+  perforación); el copiloto es un panel de chat discreto al lado, que
+  no compite visualmente con los números.
+
+  Color:  --ink (texto/fondo header), --paper (papel frío, no beige),
+          --red (marca Banorte), --red-deep (acentos activos/hover),
+          --ok (verde, solo para "ahorras $X" — nunca decorativo)
+  Type:   Fraunces (montos, títulos) / Inter (UI, cuerpo, controles)
+  Layout: dos columnas en desktop (estado | copiloto), apiladas en móvil
 */
 
+/*
+  Paleta basada en los colores oficiales de marca Banorte:
+  rojo #EC0029, y su familia de grises (#F5F5F5, #C7C9C9, #6A6867).
+  Se atenúan los extremos (nada de blanco puro ni rojo a tope de
+  saturación) para bajar el brillo de pantalla en sesiones largas.
+*/
 :root {
-  --ink: #14110f;
-  --ink-soft: #4a463f;
-  --paper: #edeff2;
-  --paper-raised: #ffffff;
-  --red: #c8102e;
-  --red-deep: #7a0619;
-  --line: #d7dae0;
+  --ink: #221f1d;
+  --ink-soft: #6a6867;
+  --paper: #d9d7d4;
+  --paper-raised: #f1efec;
+  --red: #d4152f;
+  --red-deep: #8c0019;
+  --red-wash: #f2dade;
+  --ok: #1f6d45;
+  --ok-wash: #e0ece5;
+  --line: #c7c9c9;
   --radius: 14px;
   --font-display: "Fraunces", serif;
   --font-ui: "Inter", sans-serif;
@@ -32,28 +44,33 @@ body {
   font-family: var(--font-ui);
   color: var(--ink);
   min-height: 100vh;
+}
+
+.app {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(340px, 0.85fr);
+  min-height: 100vh;
+}
+
+@media (max-width: 900px) {
+  .app {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ============ ESTADO DE CRÉDITO ============ */
+
+.statement {
+  background: var(--paper);
+  padding: 28px clamp(20px, 4vw, 48px) 48px;
+  overflow-y: auto;
+}
+
+.statement__header {
   display: flex;
   align-items: center;
-  justify-content: center;
-  padding: 24px;
-}
-
-.frame {
-  width: 100%;
-  max-width: 440px;
-  height: min(820px, 92vh);
-  background: var(--paper);
-  border-radius: 28px;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  box-shadow: 0 40px 80px rgba(0, 0, 0, 0.45);
-}
-
-.frame__header {
-  background: var(--ink);
-  color: white;
-  padding: 22px 22px 18px;
+  justify-content: space-between;
+  margin-bottom: 28px;
 }
 
 .brand {
@@ -64,28 +81,304 @@ body {
 
 .brand__mark {
   font-family: var(--font-display);
-  font-size: 22px;
+  font-size: 21px;
   font-weight: 600;
   color: var(--red);
 }
 
 .brand__divider {
   width: 1px;
-  height: 14px;
-  background: rgba(255, 255, 255, 0.3);
+  height: 13px;
+  background: var(--line);
 }
 
 .brand__unit {
+  font-size: 13px;
+  color: var(--ink-soft);
+}
+
+.statement__live {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--ink-soft);
+}
+
+.statement__live i {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--ok);
+  display: inline-block;
+}
+
+.statement__loading {
+  color: var(--ink-soft);
   font-size: 14px;
+}
+
+.statement__error {
+  color: var(--red-deep);
+  font-size: 14px;
+  max-width: 40ch;
+}
+
+/* -- tarjeta física -- */
+
+.credit-card {
+  background: linear-gradient(155deg, #3a0410 0%, var(--red-deep) 45%, var(--red) 100%);
+  border-radius: 16px;
+  padding: 22px 24px;
+  color: #f0eeec;
+  max-width: 380px;
+  margin-bottom: 26px;
+  box-shadow: 0 16px 32px rgba(122, 6, 25, 0.25);
+}
+
+.credit-card__top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 30px;
+}
+
+.credit-card__brand {
+  font-family: var(--font-display);
+  font-size: 19px;
+  font-weight: 600;
+}
+
+.credit-card__tier {
+  font-size: 11px;
+  letter-spacing: 0.03em;
   color: rgba(255, 255, 255, 0.75);
 }
 
-.frame__tagline {
-  margin: 8px 0 0;
+.credit-card__number {
+  font-family: var(--font-ui);
+  font-size: 18px;
+  letter-spacing: 0.08em;
+  margin-bottom: 18px;
+}
+
+.credit-card__bottom {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.75);
+}
+
+.credit-card__holder {
+  font-size: 13px;
+  color: #f0eeec;
+  font-weight: 500;
+}
+
+/* -- resumen de saldo -- */
+
+.summary-row {
+  display: flex;
+  gap: 28px;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+}
+
+.summary-item__label {
+  font-size: 12.5px;
+  color: var(--ink-soft);
+  margin: 0 0 4px;
+}
+
+.summary-item__value {
+  font-family: var(--font-display);
+  font-size: 30px;
+  font-weight: 500;
+  margin: 0;
+}
+
+.summary-item__value--tag {
+  display: inline-block;
+  font-family: var(--font-ui);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--red-deep);
+  background: var(--red-wash);
+  padding: 2px 8px;
+  border-radius: 20px;
+  margin-left: 8px;
+  vertical-align: middle;
+}
+
+.usage-bar {
+  margin: 18px 0 30px;
+}
+
+.usage-bar__track {
+  height: 6px;
+  border-radius: 4px;
+  background: var(--line);
+  overflow: hidden;
+  margin-bottom: 6px;
+}
+
+.usage-bar__fill {
+  height: 100%;
+  background: var(--red);
+  border-radius: 4px;
+}
+
+.usage-bar__caption {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: var(--ink-soft);
+}
+
+/* -- comparativa de intereses -- */
+
+.section-title {
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 500;
+  margin: 34px 0 4px;
+}
+
+.section-subtitle {
+  font-size: 13px;
+  color: var(--ink-soft);
+  margin: 0 0 16px;
+}
+
+.compare {
+  border-top: 1px dashed var(--line);
+  padding-top: 16px;
+}
+
+.compare-row {
+  padding: 12px 0;
+  border-bottom: 1px dashed var(--line);
+}
+
+.compare-row:last-child {
+  border-bottom: none;
+}
+
+.compare-row__top {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 8px;
+}
+
+.compare-row__label {
+  font-size: 13.5px;
+  font-weight: 600;
+}
+
+.compare-row__recommended {
+  font-size: 10.5px;
+  font-weight: 700;
+  color: var(--red-deep);
+  background: var(--red-wash);
+  padding: 2px 7px;
+  border-radius: 20px;
+  margin-left: 8px;
+}
+
+.compare-row__amount {
+  font-family: var(--font-display);
+  font-size: 16px;
+}
+
+.compare-row__track {
+  height: 8px;
+  border-radius: 4px;
+  background: var(--line);
+  overflow: hidden;
+}
+
+.compare-row__fill {
+  height: 100%;
+  border-radius: 4px;
+  background: var(--ink);
+}
+
+.compare-row--current .compare-row__fill {
+  background: #9b958a;
+}
+
+.compare-row--best .compare-row__fill {
+  background: var(--red);
+}
+
+.compare-row__meta {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: var(--ink-soft);
+  margin-top: 6px;
+}
+
+.compare-row__save {
+  color: var(--ok);
+  font-weight: 600;
+}
+
+/* -- CTA hacia el copiloto -- */
+
+.statement-cta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  margin-top: 28px;
+  padding: 14px 18px;
+  border: none;
+  border-radius: 12px;
+  background: var(--ink);
+  color: #f0eeec;
+  font-family: var(--font-ui);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.statement-cta:hover {
+  background: var(--red-deep);
+}
+
+/* ============ COPILOTO (chat) ============ */
+
+.copilot {
+  background: var(--ink);
+  color: #f0eeec;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.copilot__header {
+  padding: 28px 24px 18px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.copilot__title {
+  font-family: var(--font-display);
+  font-size: 19px;
+  font-weight: 500;
+  margin: 0 0 6px;
+}
+
+.copilot__tagline {
+  margin: 0;
   font-size: 13px;
   line-height: 1.4;
   color: rgba(255, 255, 255, 0.55);
-  max-width: 30ch;
+  max-width: 34ch;
 }
 
 .thread {
@@ -98,7 +391,7 @@ body {
 }
 
 .bubble {
-  max-width: 82%;
+  max-width: 86%;
   padding: 11px 14px;
   border-radius: 16px;
   font-size: 14.5px;
@@ -107,49 +400,39 @@ body {
 
 .bubble--user {
   align-self: flex-end;
-  background: var(--ink);
+  background: var(--red);
   color: white;
   border-bottom-right-radius: 4px;
 }
 
 .bubble--agent {
   align-self: flex-start;
-  background: var(--paper-raised);
-  border: 1px solid var(--line);
-  color: var(--ink-soft);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.85);
   border-bottom-left-radius: 4px;
 }
 
-/* --- Componentes A2UI --- */
+/* --- Componentes A2UI (dentro del chat) --- */
 
 .card {
   align-self: stretch;
-  background: var(--paper-raised);
-  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: var(--radius);
   padding: 18px;
-  position: relative;
-}
-
-.card::before {
-  content: "";
-  position: absolute;
-  top: -6px;
-  left: 20px;
-  right: 20px;
-  height: 1px;
-  border-top: 1px dashed var(--line);
+  color: #f0eeec;
 }
 
 .card__eyebrow {
   font-size: 12px;
-  color: var(--ink-soft);
+  color: rgba(255, 255, 255, 0.6);
   margin: 0 0 2px;
 }
 
 .card__title {
   font-family: var(--font-display);
-  font-size: 19px;
+  font-size: 18px;
   font-weight: 500;
   margin: 0 0 14px;
   line-height: 1.3;
@@ -160,11 +443,11 @@ body {
   align-items: center;
   justify-content: space-between;
   padding: 12px 14px;
-  border: 1px solid var(--line);
+  border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 10px;
   margin-bottom: 8px;
   cursor: pointer;
-  background: var(--paper);
+  background: rgba(255, 255, 255, 0.03);
   transition: border-color 0.15s ease, background 0.15s ease;
 }
 
@@ -174,7 +457,7 @@ body {
 
 .plan-option--recommended {
   border-color: var(--red);
-  background: #fbe9ec;
+  background: rgba(200, 16, 46, 0.18);
 }
 
 .plan-option__term {
@@ -184,7 +467,7 @@ body {
 
 .plan-option__cat {
   font-size: 12px;
-  color: var(--ink-soft);
+  color: rgba(255, 255, 255, 0.6);
 }
 
 .plan-option__amount {
@@ -196,8 +479,7 @@ body {
 .card__meta {
   margin: 10px 0 14px;
   font-size: 11.5px;
-  color: var(--ink-soft);
-  opacity: 0.8;
+  color: rgba(255, 255, 255, 0.5);
 }
 
 .card__cta {
@@ -219,7 +501,7 @@ body {
 }
 
 .card__cta:disabled {
-  background: var(--line);
+  background: rgba(255, 255, 255, 0.15);
   cursor: not-allowed;
 }
 
@@ -247,7 +529,8 @@ body {
   justify-content: space-between;
   font-size: 13.5px;
   padding: 6px 0;
-  border-bottom: 1px dashed var(--line);
+  border-bottom: 1px dashed rgba(255, 255, 255, 0.12);
+  color: rgba(255, 255, 255, 0.85);
 }
 
 .confirmation__row:last-of-type {
@@ -257,25 +540,29 @@ body {
 .confirmation__note {
   margin: 8px 0 0;
   font-size: 12.5px;
-  color: var(--ink-soft);
+  color: rgba(255, 255, 255, 0.55);
 }
 
 .composer {
   display: flex;
   gap: 8px;
   padding: 14px;
-  border-top: 1px solid var(--line);
-  background: var(--paper-raised);
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .composer__input {
   flex: 1;
-  border: 1px solid var(--line);
+  border: 1px solid rgba(255, 255, 255, 0.15);
   border-radius: 10px;
   padding: 11px 13px;
   font-family: var(--font-ui);
   font-size: 14px;
-  background: var(--paper);
+  background: rgba(255, 255, 255, 0.05);
+  color: #f0eeec;
+}
+
+.composer__input::placeholder {
+  color: rgba(255, 255, 255, 0.4);
 }
 
 .composer__input:focus {
@@ -285,7 +572,7 @@ body {
 
 .composer__submit {
   border: none;
-  background: var(--ink);
+  background: var(--red);
   color: white;
   padding: 0 18px;
   border-radius: 10px;
@@ -302,6 +589,6 @@ body {
 .typing {
   align-self: flex-start;
   font-size: 13px;
-  color: var(--ink-soft);
+  color: rgba(255, 255, 255, 0.5);
   padding: 4px 6px;
 }

@@ -11,28 +11,45 @@
 </head>
 <body>
 
-  <div class="frame">
-    <header class="frame__header">
-      <div class="brand">
-        <span class="brand__mark">Banorte</span>
-        <span class="brand__divider"></span>
-        <span class="brand__unit">Crédito</span>
+  <div class="app">
+
+    <!-- ESTADO DE CRÉDITO — la mitad "recibo impreso" -->
+    <section class="statement" id="statement" aria-label="Estado de crédito">
+      <header class="statement__header">
+        <div class="brand">
+          <span class="brand__mark">Banorte</span>
+          <span class="brand__divider"></span>
+          <span class="brand__unit">Crédito</span>
+        </div>
+        <span class="statement__live"><i></i>en vivo</span>
+      </header>
+
+      <div class="statement__body" id="statement-body">
+        <p class="statement__loading">Cargando tu estado de cuenta…</p>
       </div>
-      <p class="frame__tagline">Dile lo que quieres lograr. La pantalla se arma sola.</p>
-    </header>
+    </section>
 
-    <main id="thread" class="thread" aria-live="polite"></main>
+    <!-- COPILOTO — panel de conversación -->
+    <section class="copilot" aria-label="Copiloto de crédito">
+      <header class="copilot__header">
+        <h1 class="copilot__title">Copiloto de crédito</h1>
+        <p class="copilot__tagline">Dile lo que quieres lograr. La pantalla se arma sola.</p>
+      </header>
 
-    <form id="composer" class="composer">
-      <input
-        id="composer-input"
-        class="composer__input"
-        type="text"
-        autocomplete="off"
-        placeholder="Ej. Quiero pagar menos intereses de mi tarjeta"
-      />
-      <button class="composer__submit" type="submit">Enviar</button>
-    </form>
+      <main id="thread" class="thread" aria-live="polite"></main>
+
+      <form id="composer" class="composer">
+        <input
+          id="composer-input"
+          class="composer__input"
+          type="text"
+          autocomplete="off"
+          placeholder="Ej. Quiero pagar menos intereses de mi tarjeta"
+        />
+        <button class="composer__submit" type="submit">Enviar</button>
+      </form>
+    </section>
+
   </div>
 
   <script src="app.js"></script>
