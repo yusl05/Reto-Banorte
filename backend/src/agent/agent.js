@@ -5,7 +5,6 @@ import {
   creditRestructureCard,
   planConfirmationCard,
   textCard,
-  clarificationCard,
   validateA2UI,
 } from "../a2ui/components.js";
 import { User } from "../db/models/User.js";
@@ -64,23 +63,25 @@ async function runWithProvider(provider, { userId, message, systemPrompt, tools 
     }
   }
 
-  const CLARIFICATION_TAG = "[ACLARACION]";
-  if (!uiToReturn && finalText.trim().startsWith(CLARIFICATION_TAG)) {
-    finalText = finalText.trim().slice(CLARIFICATION_TAG.length).trim();
-    uiToReturn = validateA2UI(clarificationCard(finalText));
-  } else if (!uiToReturn && finalText) {
-    uiToReturn = validateA2UI(textCard(finalText));
-  }
+  if (!uiToReturn && finalText) uiToReturn = validateA2UI(textCard(finalText));
   return { reply: finalText || "Listo.", ui: uiToReturn, mutationExecuted };
 }
 
-export async function runAgent({ userId, message }) {
+export async function runAgent({ userId, message, allowMutation = false }) {
   const user = await User.findOne({ userId });
   if (!user) throw new Error(`Usuario no encontrado: ${userId}`);
 
   const providers = getProviders();
   if (!providers.length) throw new Error("No hay proveedores LLM configurados");
-  const tools = await getMcpTools();
+
+  // apply_credit_plan mueve dinero de verdad -- solo se le da al modelo cuando
+  // la petición viene de un clic real en la tarjeta (/api/action), nunca de
+  // texto libre en el chat. Así, aunque el modelo malinterprete una frase
+  // ambigua, no tiene forma de ejecutar la mutación sin que el usuario haya
+  // confirmado explícitamente en la interfaz.
+  const allTools = await getMcpTools();
+  const tools = allowMutation ? allTools : allTools.filter((tool) => tool.name !== "apply_credit_plan");
+
   const systemPrompt = buildSystemPrompt(user);
   const failures = [];
 

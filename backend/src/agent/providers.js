@@ -92,11 +92,12 @@ function openAIProvider({ name, apiKey, endpoint, model }) {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
         body: JSON.stringify({
-          model,
-          messages: [{ role: "system", content: systemPrompt }, ...openAIMessages(messages)],
-          tools: openAITools(tools),
-          max_tokens: 512,
-        }),
+        model,
+        messages: [{ role: "system", content: systemPrompt }, ...openAIMessages(messages)],
+        tools: openAITools(tools),
+        max_tokens: 1024,
+        reasoning_effort: "low",
+      }),
       });
       return normalizeOpenAI(name, body);
     },

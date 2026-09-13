@@ -29,7 +29,11 @@ export function createActionRouter(agent = runAgent) {
     }
 
     try {
-      const result = await agent({ userId: req.userId, message: buildMessage(payload || {}) });
+      const result = await agent({
+        userId: req.userId,
+        message: buildMessage(payload || {}),
+        allowMutation: true,
+      });
       res.json(result);
     } catch (err) {
       console.error("[action] error:", err);

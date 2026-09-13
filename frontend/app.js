@@ -19,97 +19,10 @@ function money(n) {
 }
 
 /**
- * Línea de evolución del saldo — SVG puro, sin librerías, coherente con
- * el resto de "componentes propios" del proyecto. Recibe [{label, balance}].
+ * Pinta el "Estado de Crédito" con datos reales de /api/account.
+ * currentInterest = lo que pagaría en intereses sin reestructurar, usado
+ * solo como referencia visual para comparar contra cada plan.
  */
-function renderBalanceChart(history) {
-  if (!history || history.length < 2) return null;
-
-  const width = 560;
-  const height = 160;
-  const padding = 24;
-  const values = history.map((h) => h.balance);
-  const max = Math.max(...values);
-  const min = Math.min(...values);
-  const range = max - min || 1;
-
-  const points = history.map((h, i) => {
-    const x = padding + (i / (history.length - 1)) * (width - padding * 2);
-    const y = height - padding - ((h.balance - min) / range) * (height - padding * 2);
-    return { x, y, label: h.label, balance: h.balance };
-  });
-
-  const linePath = points.map((p, i) => `${i === 0 ? "M" : "L"} ${p.x.toFixed(1)} ${p.y.toFixed(1)}`).join(" ");
-  const areaPath = `${linePath} L ${points[points.length - 1].x.toFixed(1)} ${height - padding} L ${points[0].x.toFixed(1)} ${height - padding} Z`;
-
-  const svgNS = "http://www.w3.org/2000/svg";
-  const svg = document.createElementNS(svgNS, "svg");
-  svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
-  svg.setAttribute("class", "balance-chart__svg");
-  svg.setAttribute("preserveAspectRatio", "none");
-
-  const area = document.createElementNS(svgNS, "path");
-  area.setAttribute("d", areaPath);
-  area.setAttribute("class", "balance-chart__area");
-  svg.appendChild(area);
-
-  const line = document.createElementNS(svgNS, "path");
-  line.setAttribute("d", linePath);
-  line.setAttribute("class", "balance-chart__line");
-  svg.appendChild(line);
-
-  points.forEach((p, i) => {
-    const dot = document.createElementNS(svgNS, "circle");
-    dot.setAttribute("cx", p.x.toFixed(1));
-    dot.setAttribute("cy", p.y.toFixed(1));
-    dot.setAttribute("r", i === points.length - 1 ? "4.5" : "3");
-    dot.setAttribute("class", i === points.length - 1 ? "balance-chart__dot balance-chart__dot--last" : "balance-chart__dot");
-    svg.appendChild(dot);
-  });
-
-  const wrap = el("div", "balance-chart");
-  wrap.appendChild(svg);
-
-  const labels = el("div", "balance-chart__labels");
-  history.forEach((h) => labels.appendChild(el("span", "", h.label)));
-  wrap.appendChild(labels);
-
-  return wrap;
-}
-
-/**
- * Comparativa de intereses totales: cuánto pagarías en intereses sin
- * reestructurar (a tu tasa actual, en un año) vs. el total de intereses
- * de cada plan a lo largo de su plazo completo.
- */
-function renderInterestSavings(account) {
-  const currentInterest = Math.round(account.balance * (account.currentRate / 100));
-  const bars = [
-    { label: "Plan actual", value: currentInterest, current: true },
-    ...(account.options || []).map((opt) => ({
-      label: `${opt.months} meses`,
-      value: Math.max(0, Math.round(opt.monthlyPayment * opt.months - account.balance)),
-      recommended: opt.recommended,
-    })),
-  ];
-  const max = Math.max(...bars.map((b) => b.value), 1);
-
-  const wrap = el("div", "interest-savings");
-  bars.forEach((bar) => {
-    const row = el("div", "interest-savings__row");
-    const top = el("div", "interest-savings__top");
-    top.append(el("span", "", bar.label), el("span", "interest-savings__amount", money(bar.value)));
-    row.appendChild(top);
-    const track = el("div", "interest-savings__track");
-    const fill = el("div", `interest-savings__fill${bar.current ? " interest-savings__fill--current" : ""}${bar.recommended ? " interest-savings__fill--best" : ""}`);
-    fill.dataset.targetWidth = `${(bar.value / max) * 100}%`;
-    track.appendChild(fill);
-    row.appendChild(track);
-    wrap.appendChild(row);
-  });
-  return wrap;
-}
-
 function renderStatement(account) {
   statementBody.innerHTML = "";
 
@@ -150,9 +63,7 @@ function renderStatement(account) {
   currentTop.append(el("span", "compare-row__label", "Plan actual"), el("span", "compare-row__amount", `CAT ${account.currentRate}%`));
   currentRow.appendChild(currentTop);
   const currentTrack = el("div", "compare-row__track");
-  const currentFill = el("div", "compare-row__fill");
-  currentFill.dataset.targetWidth = `${(account.currentRate / maxCat) * 100}%`;
-  currentTrack.appendChild(currentFill);
+  currentTrack.appendChild(Object.assign(el("div", "compare-row__fill"), { style: `width:${(account.currentRate / maxCat) * 100}%` }));
   currentRow.appendChild(currentTrack);
   currentRow.appendChild(el("div", "compare-row__meta", "Sin ahorro"));
   compare.appendChild(currentRow);
@@ -165,9 +76,7 @@ function renderStatement(account) {
     top2.append(label, el("span", "compare-row__amount", `CAT ${opt.cat}%`));
     row.appendChild(top2);
     const track = el("div", "compare-row__track");
-    const fill = el("div", "compare-row__fill");
-    fill.dataset.targetWidth = `${(opt.cat / maxCat) * 100}%`;
-    track.appendChild(fill);
+    track.appendChild(Object.assign(el("div", "compare-row__fill"), { style: `width:${(opt.cat / maxCat) * 100}%` }));
     row.appendChild(track);
     const meta = el("div", "compare-row__meta");
     meta.append(
@@ -178,23 +87,6 @@ function renderStatement(account) {
     compare.appendChild(row);
   });
   statementBody.appendChild(compare);
-
-  const balanceChart = renderBalanceChart(account.balanceHistory);
-  if (balanceChart) {
-    statementBody.appendChild(el("h2", "section-title", "Evolución del saldo deudor"));
-    statementBody.appendChild(el("p", "section-subtitle", "Histórico de comportamiento en los últimos 6 meses"));
-    statementBody.appendChild(balanceChart);
-  }
-
-  statementBody.appendChild(el("h2", "section-title", "Ahorro potencial en intereses"));
-  statementBody.appendChild(el("p", "section-subtitle", "Intereses totales estimados, plan actual vs. reestructura"));
-  statementBody.appendChild(renderInterestSavings(account));
-
-  requestAnimationFrame(() => {
-    statementBody.querySelectorAll("[data-target-width]").forEach((bar) => {
-      bar.style.width = bar.dataset.targetWidth;
-    });
-  });
 
   const cta = el("button", "statement-cta");
   cta.append(el("span", "", "Pedir reestructura al agente"), el("span", "", "→"));
@@ -240,6 +132,11 @@ function removeTyping() {
   document.getElementById("typing-indicator")?.remove();
 }
 
+/**
+ * Registry de componentes A2UI. Cada key es un "component" que puede
+ * mandar el backend; el valor es la función que lo pinta en el DOM.
+ * Este registry ES la "biblioteca de componentes propia" que pide el reto.
+ */
 const componentRegistry = {
   credit_restructure_card(props, actions = []) {
     const card = document.createElement("div");
@@ -307,7 +204,7 @@ const componentRegistry = {
     confirmation.className = "confirmation";
     const check = document.createElement("div");
     check.className = "confirmation__check";
-    check.textContent = "✓";
+    check.textContent = "⏳";
     const title = document.createElement("h3");
     title.className = "card__title";
     title.textContent = props.title;
@@ -328,19 +225,6 @@ const componentRegistry = {
     note.textContent = props.note;
     confirmation.appendChild(note);
     card.appendChild(confirmation);
-    return card;
-  },
-
-  clarification_card(props) {
-    const card = document.createElement("div");
-    card.className = "card clarification";
-    const icon = document.createElement("div");
-    icon.className = "clarification__icon";
-    icon.textContent = "?";
-    const text = document.createElement("p");
-    text.className = "clarification__text";
-    text.textContent = props.text;
-    card.append(icon, text);
     return card;
   },
 
@@ -385,9 +269,9 @@ async function sendMessage(message) {
       return;
     }
     addBubble(data.reply, "agent");
-    if (data.ui && !["text_card", "clarification_card"].includes(data.ui.component)) {
-    renderUI(data.ui);
-  }
+    if (data.ui && data.ui.component !== "text_card") {
+      renderUI(data.ui);
+    }
   } catch (err) {
     removeTyping();
     addBubble(`No pude conectar con el agente: ${err.message}`, "agent");
@@ -419,9 +303,9 @@ async function sendAction(actionId, payload) {
     }
 
     addBubble(data.reply, "agent");
-    if (data.ui && !["text_card", "clarification_card"].includes(data.ui.component)) {
-    renderUI(data.ui);
-  }
+    if (data.ui && data.ui.component !== "text_card") {
+      renderUI(data.ui);
+    }
   } catch (err) {
     removeTyping();
     addBubble(`No pude conectar con el agente: ${err.message}`, "agent");

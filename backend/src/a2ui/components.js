@@ -36,11 +36,11 @@ export function planConfirmationCard({ months, cat, monthlyPayment }) {
   return {
     component: "plan_confirmation_card",
     props: {
-      title: "Tu nuevo plan quedó activo",
+      title: "Tu solicitud de reestructura fue enviada a revisión",
       months,
       cat,
       monthlyPayment,
-      note: "Ya puedes ver tu nueva mensualidad reflejada en tu próximo estado de cuenta.",
+      note: "Por seguridad, toda solicitud de cambio de crédito pasa por los filtros de validación de Banorte antes de activarse. Te notificaremos cuando quede confirmada.",
     },
     actions: [],
   };
