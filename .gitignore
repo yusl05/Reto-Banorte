@@ -62,6 +62,11 @@ jspm_packages/
 node_modules/
 web_modules/
 
+# Local configuration and credentials
+.env
+.env.*
+!.env.example
+
 # ••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••
 # DEVELOPMENT & RUNTIME ARTIFACTS
 # ••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••

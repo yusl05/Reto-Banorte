@@ -1,18 +1,25 @@
 /*
-  Tokens de diseño actualizados (Estilo Moderno / Tech + Single Scroll Fix)
+  Tokens de diseño
+  Color:  --ink (texto), --paper (fondo, papel frío no cálido),
+          --red (marca Banorte), --red-deep (acentos activos),
+          --line (hairlines de estado de cuenta)
+  Type:   Fraunces (serif, para montos y encabezados — evoca un estado de cuenta impreso)
+          Inter (UI, cuerpo, controles)
+  Layout: una sola columna tipo "app bancaria", ancho de dispositivo,
+          las tarjetas A2UI se dibujan como recibos con borde perforado.
 */
 
 :root {
-  --ink: #0f1115;
-  --ink-soft: #525866;
-  --paper: #f4f5f7;
+  --ink: #14110f;
+  --ink-soft: #4a463f;
+  --paper: #edeff2;
   --paper-raised: #ffffff;
-  --red: #f02d3a;
-  --red-deep: #a81c25;
-  --line: #e2e4e9;
-  --radius: 16px;
-  --font-display: "Syne", "Inter", sans-serif;
-  --font-ui: "Plus Jakarta Sans", system-ui, -apple-system, sans-serif;
+  --red: #c8102e;
+  --red-deep: #7a0619;
+  --line: #d7dae0;
+  --radius: 14px;
+  --font-display: "Fraunces", serif;
+  --font-ui: "Inter", sans-serif;
 }
 
 * {
@@ -21,75 +28,32 @@
 
 body {
   margin: 0;
-  padding: 0;
-  min-height: 100vh;
-  background: var(--paper);
+  background: var(--ink);
   font-family: var(--font-ui);
   color: var(--ink);
-  -webkit-font-smoothing: antialiased;
-}
-
-/* ==========================================================================
-    Reglas de Grid para el contenedor padre .app-layout (70% / 30%)
-    ========================================================================== */
-
-.app-layout {
-  display: grid;
-  grid-template-columns: 2fr 1fr;
-  gap: 20px;
-  height: 100vh;
-  max-height: 100vh;
-  width: 100vw;
-  max-width: 100vw;
-  padding: 16px;
-  margin: 0 auto;
-  box-sizing: border-box;
-  overflow: hidden; 
-}
-
-.app-layout > * {
-  min-width: 0;
-  min-height: 0;
-}
-
-.main-column {
-  overflow-y: auto;
-  border-radius: 28px;
-  background: var(--paper-raised);
-  box-shadow: 0 10px 30px rgba(15, 17, 21, 0.04);
-  padding: 24px;
-  height: 100%;
-}
-
-.col--chat {
+  min-height: 100vh;
   display: flex;
-  flex-direction: column;
-  height: 100%;
-  min-height: 0;
-  min-width: 0;
-  overflow: hidden;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
 }
-
-/* --- Componentes del Chat de la columna derecha --- */
 
 .frame {
   width: 100%;
-  max-width: 100%;
-  height: 100%;
+  max-width: 440px;
+  height: min(820px, 92vh);
   background: var(--paper);
   border-radius: 28px;
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  box-shadow: 0 20px 40px rgba(15, 17, 21, 0.08);
-  border: 1px solid var(--line);
+  box-shadow: 0 40px 80px rgba(0, 0, 0, 0.45);
 }
 
 .frame__header {
   background: var(--ink);
   color: white;
   padding: 22px 22px 18px;
-  flex-shrink: 0;
 }
 
 .brand {
@@ -101,28 +65,27 @@ body {
 .brand__mark {
   font-family: var(--font-display);
   font-size: 22px;
-  font-weight: 700;
-  letter-spacing: -0.02em;
+  font-weight: 600;
   color: var(--red);
 }
 
 .brand__divider {
   width: 1px;
   height: 14px;
-  background: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.3);
 }
 
 .brand__unit {
-  font-size: 13.5px;
-  font-weight: 500;
-  color: rgba(255, 255, 255, 0.7);
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.75);
 }
 
 .frame__tagline {
   margin: 8px 0 0;
   font-size: 13px;
   line-height: 1.4;
-  color: rgba(255, 255, 255, 0.5);
+  color: rgba(255, 255, 255, 0.55);
+  max-width: 30ch;
 }
 
 .thread {
@@ -132,16 +95,14 @@ body {
   display: flex;
   flex-direction: column;
   gap: 14px;
-  min-height: 0;
 }
 
 .bubble {
   max-width: 82%;
-  padding: 12px 16px;
-  border-radius: 18px;
-  font-size: 14px;
-  line-height: 1.5;
-  letter-spacing: -0.01em;
+  padding: 11px 14px;
+  border-radius: 16px;
+  font-size: 14.5px;
+  line-height: 1.45;
 }
 
 .bubble--user {
@@ -159,7 +120,7 @@ body {
   border-bottom-left-radius: 4px;
 }
 
-/* --- Componentes A2UI (Tarjetas dentro del chat) --- */
+/* --- Componentes A2UI --- */
 
 .card {
   align-self: stretch;
@@ -170,11 +131,26 @@ body {
   position: relative;
 }
 
+.card::before {
+  content: "";
+  position: absolute;
+  top: -6px;
+  left: 20px;
+  right: 20px;
+  height: 1px;
+  border-top: 1px dashed var(--line);
+}
+
+.card__eyebrow {
+  font-size: 12px;
+  color: var(--ink-soft);
+  margin: 0 0 2px;
+}
+
 .card__title {
   font-family: var(--font-display);
-  font-size: 18px;
-  font-weight: 700;
-  letter-spacing: -0.02em;
+  font-size: 19px;
+  font-weight: 500;
   margin: 0 0 14px;
   line-height: 1.3;
 }
@@ -185,16 +161,103 @@ body {
   justify-content: space-between;
   padding: 12px 14px;
   border: 1px solid var(--line);
-  border-radius: 12px;
+  border-radius: 10px;
   margin-bottom: 8px;
   cursor: pointer;
   background: var(--paper);
-  transition: all 0.2s ease;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.plan-option:hover {
+  border-color: var(--red);
 }
 
 .plan-option--recommended {
   border-color: var(--red);
-  background: #fff5f5;
+  background: #fbe9ec;
+}
+
+.plan-option__term {
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.plan-option__cat {
+  font-size: 12px;
+  color: var(--ink-soft);
+}
+
+.plan-option__amount {
+  font-family: var(--font-display);
+  font-size: 17px;
+  font-weight: 500;
+}
+
+.card__meta {
+  margin: 10px 0 14px;
+  font-size: 11.5px;
+  color: var(--ink-soft);
+  opacity: 0.8;
+}
+
+.card__cta {
+  width: 100%;
+  padding: 12px;
+  border: none;
+  border-radius: 10px;
+  background: var(--red);
+  color: white;
+  font-family: var(--font-ui);
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.card__cta:hover {
+  background: var(--red-deep);
+}
+
+.card__cta:disabled {
+  background: var(--line);
+  cursor: not-allowed;
+}
+
+.confirmation {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.confirmation__check {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: #12321f;
+  color: #79f2a4;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  margin-bottom: 6px;
+}
+
+.confirmation__row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13.5px;
+  padding: 6px 0;
+  border-bottom: 1px dashed var(--line);
+}
+
+.confirmation__row:last-of-type {
+  border-bottom: none;
+}
+
+.confirmation__note {
+  margin: 8px 0 0;
+  font-size: 12.5px;
+  color: var(--ink-soft);
 }
 
 .composer {
@@ -203,23 +266,21 @@ body {
   padding: 14px;
   border-top: 1px solid var(--line);
   background: var(--paper-raised);
-  flex-shrink: 0;
 }
 
 .composer__input {
   flex: 1;
   border: 1px solid var(--line);
-  border-radius: 12px;
-  padding: 11px 14px;
+  border-radius: 10px;
+  padding: 11px 13px;
   font-family: var(--font-ui);
   font-size: 14px;
   background: var(--paper);
-  color: var(--ink);
-  outline: none;
 }
 
 .composer__input:focus {
-  border-color: var(--ink-soft);
+  outline: 2px solid var(--red);
+  outline-offset: 1px;
 }
 
 .composer__submit {
@@ -227,67 +288,20 @@ body {
   background: var(--ink);
   color: white;
   padding: 0 18px;
-  border-radius: 12px;
+  border-radius: 10px;
   font-family: var(--font-ui);
   font-weight: 600;
   font-size: 14px;
   cursor: pointer;
 }
 
-/* --- Media Query para móviles / pantallas pequeñas (Una sola barra fluida) --- */
-@media (max-width: 1200px) {
-  body {
-    overflow-y: auto; /* Permite que la página entera scrollear fluidamente */
-  }
-
-  .app-layout {
-    display: flex;
-    flex-direction: column;
-    height: auto;
-    max-height: none;
-    overflow-y: visible;
-    padding: 12px;
-    gap: 16px;
-  }
-
-  .main-column {
-    height: auto;
-    max-height: none;
-    overflow-y: visible; /* Elimina la barra interna de la columna principal */
-  }
-
-  .col--chat {
-    height: 500px; /* Altura controlada solo para el chat móvil */
-    overflow: hidden;
-  }
+.composer__submit:hover {
+  background: var(--red-deep);
 }
 
-/* --- Animación de Agente Escribiendo --- */
-.typing-indicator {
-  display: flex;
-  gap: 4px;
-  padding: 14px 18px;
-  background: var(--paper-raised);
-  border: 1px solid var(--line);
-  border-radius: 18px;
-  border-bottom-left-radius: 4px;
-  width: fit-content;
+.typing {
   align-self: flex-start;
-}
-
-.typing-dot {
-  width: 6px;
-  height: 6px;
-  background: var(--ink-soft);
-  border-radius: 50%;
-  animation: typing 1.4s infinite ease-in-out;
-}
-
-.typing-dot:nth-child(1) { animation-delay: 0s; }
-.typing-dot:nth-child(2) { animation-delay: 0.2s; }
-.typing-dot:nth-child(3) { animation-delay: 0.4s; }
-
-@keyframes typing {
-  0%, 100% { transform: translateY(0); opacity: 0.4; }
-  50% { transform: translateY(-4px); opacity: 1; }
+  font-size: 13px;
+  color: var(--ink-soft);
+  padding: 4px 6px;
 }

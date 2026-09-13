@@ -1,83 +1,215 @@
-const USER_ID = "6aa5b53fe711c4a28ae539bd";
+const API_BASE = "http://localhost:3000/api";
 
-// Esperar a que la página cargue para evitar errores de conexión con el HTML
-document.addEventListener('DOMContentLoaded', () => {
-  const thread = document.querySelector('.thread');
-  const form = document.querySelector('.composer');
-  const input = document.querySelector('.composer__input');
+const thread = document.getElementById("thread");
+const composer = document.getElementById("composer");
+const input = document.getElementById("composer-input");
 
-  // Función para imprimir mensajes
-  function renderMessage(text, sender) {
-    if (!thread) return;
-    const bubble = document.createElement('div');
-    bubble.classList.add('bubble', `bubble--${sender}`);
-    bubble.textContent = text;
-    thread.appendChild(bubble);
-    thread.scrollTop = thread.scrollHeight; 
-  }
+function addBubble(text, who) {
+  const el = document.createElement("div");
+  el.className = `bubble bubble--${who}`;
+  el.textContent = text;
+  thread.appendChild(el);
+  thread.scrollTop = thread.scrollHeight;
+}
 
-  // 1. Mensaje inicial por defecto
-  renderMessage("Hola, soy tu Liquidity Copilot de Banorte. ¿En qué te puedo ayudar hoy?", 'agent');
+function addTyping() {
+  const el = document.createElement("div");
+  el.className = "typing";
+  el.textContent = "El agente está pensando…";
+  el.id = "typing-indicator";
+  thread.appendChild(el);
+  thread.scrollTop = thread.scrollHeight;
+  return el;
+}
 
-  // 2. Lógica de envío de mensajes
-  // Lógica de envío de mensajes
-  if (form) {
-    form.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const message = input.value.trim();
-      if (!message) return;
+function removeTyping() {
+  document.getElementById("typing-indicator")?.remove();
+}
 
-      // 1. Mostrar lo que el usuario escribió
-      renderMessage(message, 'user');
-      input.value = '';
+/**
+ * Registry de componentes A2UI. Cada key es un "component" que puede
+ * mandar el backend; el valor es la función que lo pinta en el DOM.
+ * Este registry ES la "biblioteca de componentes propia" que pide el reto.
+ */
+const componentRegistry = {
+  credit_restructure_card(props, actions = []) {
+    const card = document.createElement("div");
+    card.className = "card";
 
-      // 2. Mostrar animación de "escribiendo..."
-      const thread = document.querySelector('.thread');
-      const loader = document.createElement('div');
-      loader.id = 'agent-loading';
-      loader.classList.add('typing-indicator');
-      loader.innerHTML = '<div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div>';
-      thread.appendChild(loader);
-      thread.scrollTop = thread.scrollHeight;
+    const eyebrow = document.createElement("p");
+    eyebrow.className = "card__eyebrow";
+    eyebrow.textContent = props.subtitle;
+    const title = document.createElement("h3");
+    title.className = "card__title";
+    title.textContent = props.title;
+    const list = document.createElement("div");
+    list.className = "plan-list";
+    const meta = document.createElement("p");
+    meta.className = "card__meta";
+    meta.textContent = props.meta;
+    const cta = document.createElement("button");
+    cta.className = "card__cta";
+    cta.disabled = true;
+    const applyAction = actions.find((action) => action.id === "apply_plan");
+    cta.textContent = applyAction?.label || "Selecciona un plazo";
+    card.append(eyebrow, title, list, meta, cta);
 
-      try {
-        // 3. Esperar la respuesta de Gemini
-        const response = await fetch('http://localhost:3000/api/chat', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ userId: USER_ID, message: message })
-        });
+    let selectedMonths = null;
 
-        const data = await response.json();
-        
-        // 4. Quitar la animación de "escribiendo..."
-        document.getElementById('agent-loading')?.remove();
-        
-        // 5. Mostrar la respuesta final
-        renderMessage(data.reply, 'agent');
-
-        // ⚡ A2UI: Si la IA manda actualizar el dashboard
-        if (data.dashboardUpdates && data.dashboardUpdates.highlightedPlan === "12") {
-          document.querySelectorAll('.bar-item').forEach(el => el.classList.remove('bar-item--recommended'));
-          const tarjetas = Array.from(document.querySelectorAll('.bar-item'));
-          const plan12 = tarjetas.find(el => el.textContent.includes('12 Meses'));
-          if (plan12) plan12.classList.add('bar-item--recommended');
-        }
-
-      } catch (error) {
-        console.error("Error conectando al backend:", error);
-        document.getElementById('agent-loading')?.remove();
-        renderMessage("Error de conexión al servidor.", 'agent');
-      }
+    props.options.forEach((opt) => {
+      const row = document.createElement("div");
+      row.className = "plan-option" + (opt.recommended ? " plan-option--recommended" : "");
+      const detail = document.createElement("div");
+      const term = document.createElement("div");
+      term.className = "plan-option__term";
+      term.textContent = `${opt.months} meses`;
+      const cat = document.createElement("div");
+      cat.className = "plan-option__cat";
+      cat.textContent = `CAT ${opt.cat}%`;
+      detail.append(term, cat);
+      const amount = document.createElement("div");
+      amount.className = "plan-option__amount";
+      amount.textContent = `$${opt.monthlyPayment.toLocaleString("es-MX")}`;
+      row.append(detail, amount);
+      row.addEventListener("click", () => {
+        list.querySelectorAll(".plan-option").forEach((r) => r.classList.remove("plan-option--recommended"));
+        row.classList.add("plan-option--recommended");
+        selectedMonths = opt.months;
+        cta.disabled = false;
+        cta.textContent = `${applyAction?.label || "Aplicar plan"} a ${opt.months} meses`;
+      });
+      list.appendChild(row);
     });
-  }
 
-  // 3. Botones del Dashboard hacia el Chat
-  document.querySelectorAll('[data-action-prompt]').forEach(button => {
-    button.addEventListener('click', (e) => {
-      const promptTexto = e.currentTarget.getAttribute('data-action-prompt');
-      if (input) input.value = promptTexto;
-      if (form) form.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
+    cta.addEventListener("click", () => {
+      if (!selectedMonths) return;
+      cta.disabled = true;
+      cta.textContent = "Aplicando…";
+      if (applyAction) sendAction(applyAction.id, { months: selectedMonths });
     });
+
+    return card;
+  },
+
+  plan_confirmation_card(props) {
+    const card = document.createElement("div");
+    card.className = "card";
+    const confirmation = document.createElement("div");
+    confirmation.className = "confirmation";
+    const check = document.createElement("div");
+    check.className = "confirmation__check";
+    check.textContent = "✓";
+    const title = document.createElement("h3");
+    title.className = "card__title";
+    title.textContent = props.title;
+    confirmation.append(check, title);
+    [["Plazo", `${props.months} meses`], ["CAT", `${props.cat}%`],
+      ["Mensualidad", `$${props.monthlyPayment.toLocaleString("es-MX")}`]].forEach(([label, value]) => {
+      const row = document.createElement("div");
+      row.className = "confirmation__row";
+      const left = document.createElement("span");
+      left.textContent = label;
+      const right = document.createElement("span");
+      right.textContent = value;
+      row.append(left, right);
+      confirmation.appendChild(row);
+    });
+    const note = document.createElement("p");
+    note.className = "confirmation__note";
+    note.textContent = props.note;
+    confirmation.appendChild(note);
+    card.appendChild(confirmation);
+    return card;
+  },
+
+  text_card(props) {
+    const card = document.createElement("div");
+    card.className = "card";
+    const text = document.createElement("p");
+    text.className = "card__title";
+    text.style.cssText = "font-size:15px;font-family:var(--font-ui);font-weight:500;";
+    text.textContent = props.text;
+    card.appendChild(text);
+    return card;
+  },
+};
+
+function renderUI(ui) {
+  if (!ui) return;
+  const renderer = componentRegistry[ui.component];
+  if (!renderer) {
+    console.warn("Componente A2UI desconocido:", ui.component);
+    return;
+  }
+  const node = renderer(ui.props, ui.actions);
+  thread.appendChild(node);
+  thread.scrollTop = thread.scrollHeight;
+}
+
+async function sendMessage(message) {
+  addBubble(message, "user");
+  const typing = addTyping();
+  try {
+    const res = await fetch(`${API_BASE}/chat`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({ message }),
+    });
+    const data = await res.json();
+    removeTyping();
+    if (data.error) {
+      addBubble(`Error: ${data.error}`, "agent");
+      return;
+    }
+    addBubble(data.reply, "agent");
+    renderUI(data.ui);
+  } catch (err) {
+    removeTyping();
+    addBubble(`No pude conectar con el agente: ${err.message}`, "agent");
+  }
+}
+
+async function startSession() {
+  const res = await fetch(`${API_BASE}/session/demo`, {
+    method: "POST",
+    credentials: "include",
   });
+  if (!res.ok) throw new Error("No se pudo iniciar la sesión demo");
+}
+
+async function sendAction(actionId, payload) {
+  const typing = addTyping();
+  try {
+    const res = await fetch(`${API_BASE}/action`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({ actionId, payload }),
+    });
+    const data = await res.json();
+    removeTyping();
+    if (data.error) {
+      addBubble(`Error: ${data.error}`, "agent");
+      return;
+    }
+
+    addBubble(data.reply, "agent");
+    renderUI(data.ui);
+  } catch (err) {
+    removeTyping();
+    addBubble(`No pude conectar con el agente: ${err.message}`, "agent");
+  }
+}
+
+composer.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const value = input.value.trim();
+  if (!value) return;
+  input.value = "";
+  sendMessage(value);
 });
+
+startSession()
+  .then(() => addBubble("Hola, soy tu agente de crédito Banorte. Cuéntame qué necesitas.", "agent"))
+  .catch((err) => addBubble(`No pude iniciar la sesión: ${err.message}`, "agent"));

@@ -7,28 +7,14 @@ import mongoose from "mongoose";
 async function seed() {
   await connectDB();
 
-  await User.updateOne(
+  const user = await User.findOneAndUpdate(
     { userId: "demo-user" },
-    {
-      $setOnInsert: {
-        userId: "demo-user",
-        name: "Ana",
-        generalPrompt: "Ana no tiene movimientos recientes registrados.",
-      },
-    },
-    { upsert: true }
+    { $setOnInsert: { userId: "demo-user", name: "Ana", generalPrompt: "Ana no tiene movimientos recientes registrados." } },
+    { upsert: true, new: true }
   );
-
-  await CreditAccount.updateOne(
-    { userId: "demo-user" },
-    {
-      $setOnInsert: {
-        userId: "demo-user",
-        cardLastFour: "4821",
-        balance: 18400,
-        currentRate: 36.0,
-      },
-    },
+  await CreditAccount.findOneAndUpdate(
+    { userId: user.userId },
+    { $setOnInsert: { userId: user.userId, cardLastFour: "4821", balance: 18400, currentRate: 36.0 } },
     { upsert: true }
   );
 

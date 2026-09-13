@@ -1,47 +1,90 @@
-import { GoogleGenAI } from "@google/genai";
+import { callTool, getMcpTools } from "../mcp/tools.js";
+import { buildSystemPrompt } from "./systemPrompt.js";
+import { getProviders, ProviderError } from "./providers.js";
+import {
+  creditRestructureCard,
+  planConfirmationCard,
+  textCard,
+  validateA2UI,
+} from "../a2ui/components.js";
+import { User } from "../db/models/User.js";
 
-export async function processUserMessage(userMessage, contextData) {
-  try {
-    const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+function toolResultToA2UI(toolName, result) {
+  if (toolName === "get_credit_plans") return creditRestructureCard(result);
+  if (toolName === "apply_credit_plan") return planConfirmationCard(result);
+  return null;
+}
 
-    const systemInstruction = `
-      Eres el Liquidity Copilot de Banorte.
-      Contexto actual de la conversación: ${contextData.activePromptContext}
-      Datos de la cuenta del usuario: Deuda $${contextData.accountDetails.totalDebt}, Límite de Crédito $${contextData.accountDetails.creditLimit}.
-      
-      Debes responder SIEMPRE con un objeto JSON válido con esta estructura exacta:
-      {
-        "reply": "Tu mensaje de texto de respuesta para el usuario",
-        "ui": null,
-        "newContext": "Un breve resumen actualizado de lo que quiere el usuario",
-        "currentIntent": "Ej. DEBT_RESTRUCTURE",
-        "dashboardUpdates": {
-          "layout": "single-focus-dashboard",
-          "highlightedPlan": "12"
-        }
-      }
-      Analiza la intención del usuario y ajusta tu respuesta y las sugerencias del dashboard basándote en sus datos financieros.
-    `;
+function shouldFallback(error) {
+  return error instanceof ProviderError && error.retryable;
+}
 
-    const response = await ai.models.generateContent({
-      model: process.env.GEMINI_MODEL || "gemini-3.6-flash",
-      contents: [{ role: "user", parts: [{ text: userMessage }] }],
-      config: {
-        systemInstruction: systemInstruction,
-        temperature: 0.2,
-        responseMimeType: "application/json", // Fuerza a Gemini a devolver JSON
-      }
+async function runWithProvider(provider, { userId, message, systemPrompt, tools }) {
+  const messages = [{ role: "user", content: message }];
+  let uiToReturn = null;
+  let finalText = "";
+  let mutationExecuted = false;
+
+  for (let turn = 0; turn < 4; turn += 1) {
+    let response;
+    try {
+      response = await provider.complete({ systemPrompt, messages, tools });
+    } catch (error) {
+      error.mutationExecuted = mutationExecuted;
+      throw error;
+    }
+    finalText = response.text || finalText;
+    if (!response.toolCalls.length) break;
+
+    messages.push({
+      role: "assistant",
+      content: response.text || "",
+      toolCalls: response.toolCalls,
+      providerMessage: response.assistantMessage,
     });
 
-    // Como pedimos JSON, parseamos el texto directamente
-    return JSON.parse(response.text);
-
-  } catch (error) {
-    console.error("🔴 Error detallado en el agente de IA:", error);
-    return {
-      reply: "Error técnico al conectar con el modelo.",
-      ui: null,
-      newContext: contextData.activePromptContext
-    };
+    for (const call of response.toolCalls) {
+      const { userId: _modelUserId, ...modelInput } = call.input || {};
+      let result;
+      try {
+        result = await callTool(call.name, { ...modelInput, userId });
+        if (call.name === "apply_credit_plan") mutationExecuted = true;
+        const ui = toolResultToA2UI(call.name, result);
+        if (ui) uiToReturn = validateA2UI(ui);
+      } catch (error) {
+        result = { error: error.message };
+      }
+      messages.push({
+        role: "tool",
+        name: call.name,
+        toolCallId: call.id,
+        content: result,
+      });
+    }
   }
+
+  if (!uiToReturn && finalText) uiToReturn = validateA2UI(textCard(finalText));
+  return { reply: finalText || "Listo.", ui: uiToReturn, mutationExecuted };
+}
+
+export async function runAgent({ userId, message }) {
+  const user = await User.findOne({ userId });
+  if (!user) throw new Error(`Usuario no encontrado: ${userId}`);
+
+  const providers = getProviders();
+  if (!providers.length) throw new Error("No hay proveedores LLM configurados");
+  const tools = await getMcpTools();
+  const systemPrompt = buildSystemPrompt(user);
+  const failures = [];
+
+  for (const provider of providers) {
+    try {
+      const result = await runWithProvider(provider, { userId, message, systemPrompt, tools });
+      return { ...result, provider: provider.name };
+    } catch (error) {
+      failures.push(error.message);
+      if (!shouldFallback(error) || error.mutationExecuted) throw error;
+    }
+  }
+  throw new Error(`Ningún proveedor LLM pudo responder: ${failures.join("; ")}`);
 }
